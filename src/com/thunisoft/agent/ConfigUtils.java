@@ -43,7 +43,7 @@ public class ConfigUtils {
         InputStream input = null;
         try {
             input = ConfigUtils.class.getClassLoader().getResourceAsStream(
-                    "props/thunisoft-agent.properties");
+                    "props/agent.properties");
             properties.load(input);
         } catch (Exception e) {
             System.err.println("未找到默认配置");
