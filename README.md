@@ -14,8 +14,8 @@ the agent.properties look like as follows:
     agent.exclude.package.default=
     #the  packages that you don't want to monitor,multi config separated by semicolon 
     agent.exclude.package=
-    #the packages you want to monitor,the agent only monitor the packages and subpackages thar configed in here,
-    #multi config separated by semicolon 
+    #the packages you want to monitor,the agent only monitor the packages and subpackages 
+    #that configed in here,multi config separated by semicolon 
     agent.include.package=com.thunisoft
     #the log file name,it will add current date automatically
     agent.log.file=d\:\\agent.log
