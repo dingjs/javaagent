@@ -9,11 +9,12 @@
 	</parent>
 
 	<groupId>com.thunisoft</groupId>
-	<artifactId>thunisoft-javaagent</artifactId>
+	<artifactId>simple-apm</artifactId>
 	<version>1.0.0</version>
 	<packaging>jar</packaging>
 
 	<build>
+		<finalName>simpleApm</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
