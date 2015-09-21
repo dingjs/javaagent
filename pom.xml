@@ -29,7 +29,6 @@
 				</excludes>
 			</testResource>
 		</testResources>
->>>>>>> ae73e99b60b4dfe15d0535c3bc05162c616d9309
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
