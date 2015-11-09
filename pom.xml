@@ -4,11 +4,15 @@
 
 	<groupId>com.thunisoft</groupId>
 	<artifactId>simple-apm</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1</version>
 	<packaging>jar</packaging>
 
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.build.target>1.6</project.build.target>
+	</properties>
+
 	<build>
-		<finalName>simpleApm</finalName>
 		<sourceDirectory>src</sourceDirectory>
 		<outputDirectory>target/classes</outputDirectory>
 		<resources>
@@ -30,6 +34,25 @@
 			</testResource>
 		</testResources>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>process-classes</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<archive>
+								<manifestEntries>
+									<premain-class>com.thunisoft.agent.Agent</premain-class>
+								</manifestEntries>
+							</archive>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
