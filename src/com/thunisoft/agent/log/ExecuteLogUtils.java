@@ -1,5 +1,5 @@
 /*
- * @(#)ExecuteLogUtils.java	2015-7-27 下午05:57:01
+ * @(#)ExecuteLogUtils.java 2015-7-27 下午05:57:01
  * javaagent
  * Copyright 2015 Thuisoft, Inc. All rights reserved.
  * THUNISOFT PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
@@ -61,6 +61,8 @@ public class ExecuteLogUtils {
     private static long intervalInMillis;
 
     private static boolean logAvgExecuteTime = false;
+    
+    private static boolean inited = false;
 
     /**
      * 初使化
@@ -72,8 +74,11 @@ public class ExecuteLogUtils {
      * @author dingjsh
      * @time 2015-7-30上午10:47:58
      */
-    public static void init(String logFileName, int interval,
+    public static synchronized void init(String logFileName, int interval,
             boolean logAvgExecuteTime) {
+        if(inited){
+            return;
+        }
         ExecuteLogUtils.logFileName = logFileName;
         // ExecuteLogUtils.interval = interval;
         ExecuteLogUtils.intervalInMillis = (long) interval * 1000;
@@ -88,6 +93,7 @@ public class ExecuteLogUtils {
         logExecutor = new ScheduledThreadPoolExecutor(1);
         logExecutor.scheduleWithFixedDelay(new OutputLogRunnable(), interval,
                 interval, TimeUnit.SECONDS);
+        inited = true;
     }
 
     public static void log(String className, String methodName,
@@ -101,7 +107,7 @@ public class ExecuteLogUtils {
 
     public static void main(String[] args) {
         // dingjsh commented in 20150730 模拟测试千万次或更多调用，记录执行时间，这样可大概估出对性能的影响
-        ExecuteLogUtils.init("g:\\tmp.log", 60,true);
+        ExecuteLogUtils.init("g:\\tmp.log", 60, true);
         int classCount = 1000;
         String[] strArr = new String[classCount];
         for (int index = 0; index < classCount; index++) {
@@ -148,8 +154,9 @@ public class ExecuteLogUtils {
                 String logInfo = "methodName:{" + methodName + "},counter:{"
                         + executeCounter[0] + "},time:{" + executeCounter[1]
                         + "}";
-                if(logAvgExecuteTime && executeCounter[0]>0){
-                    logInfo+=",avg:{"+(executeCounter[1]/executeCounter[0])+"}";
+                if (logAvgExecuteTime && executeCounter[0] > 0) {
+                    logInfo += ",avg:{"
+                            + (executeCounter[1] / executeCounter[0]) + "}";
                 }
                 writeLog(logInfo);
             }
