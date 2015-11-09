@@ -1,5 +1,5 @@
 /*
- * @(#)ThunisoftClassFileTransformer.java	2015-7-24 上午09:53:44
+ * @(#)ThunisoftClassFileTransformer.java   2015-7-24 上午09:53:44
  * javaagent
  * Copyright 2015 Thuisoft, Inc. All rights reserved.
  * THUNISOFT PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
@@ -11,7 +11,6 @@ import java.lang.instrument.IllegalClassFormatException;
 import java.lang.reflect.Method;
 import java.security.ProtectionDomain;
 import java.util.Set;
-import java.util.WeakHashMap;
 import java.util.regex.Pattern;
 
 import javassist.CannotCompileException;
@@ -39,9 +38,10 @@ public class ThunisoftClassFileTransformer implements ClassFileTransformer {
     private static byte[] logUtilsOutputRunnableClassBytes = null;
 
     // private Set<ClassLoader> loadedClassLoaders = new HashSet<ClassLoader>();
-    private WeakHashMap<ClassLoader, Object> loadedClassLoaders = new WeakHashMap<ClassLoader, Object>();
+    // private WeakHashMap<ClassLoader, Object> loadedClassLoaders = new
+    // WeakHashMap<ClassLoader, Object>();
 
-    private static final Object EXISTS = new Object();
+    // private static final Object EXISTS = new Object();
 
     // private boolean classLoaderInited;
 
@@ -77,8 +77,13 @@ public class ThunisoftClassFileTransformer implements ClassFileTransformer {
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private void loadLogUtilsClass(ClassLoader loader) {
-        if (!loadedClassLoaders.containsKey(loader)) {
-            loadedClassLoaders.put(loader, EXISTS);
+        Class logUtilsClass = null;
+        try {
+            logUtilsClass = loader.loadClass(LOG_UTILS);
+        } catch (ClassNotFoundException e1) {
+            e1.printStackTrace();
+        }
+        if (null == logUtilsClass) {
             ClassPool cp = ClassPool.getDefault();
             cp.insertClassPath(new LoaderClassPath(loader));
             try {
@@ -100,12 +105,19 @@ public class ThunisoftClassFileTransformer implements ClassFileTransformer {
                         logUtilsOutputRunnableClassBytes, 0,
                         logUtilsOutputRunnableClassBytes.length);
 
-                Class logUtils = loader.loadClass(LOG_UTILS);
-                Method initMethod = logUtils.getDeclaredMethod("init",
-                        String.class, int.class,boolean.class);
-                initMethod.invoke(logUtils, ConfigUtils.getLogFileName(),
-                        ConfigUtils.getLogInterval(),ConfigUtils.isLogAvgExecuteTime());
+                logUtilsClass = loader.loadClass(LOG_UTILS);
             } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        if(null != logUtilsClass){
+            try{
+                Method initMethod = logUtilsClass.getDeclaredMethod("init",
+                        String.class, int.class, boolean.class);
+                initMethod.invoke(logUtilsClass, ConfigUtils.getLogFileName(),
+                        ConfigUtils.getLogInterval(),
+                        ConfigUtils.isLogAvgExecuteTime());
+            }catch(Exception e){
                 e.printStackTrace();
             }
         }
