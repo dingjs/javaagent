@@ -193,7 +193,6 @@ public class ExecuteLogUtils {
             } else {
                 oldCounter[0] += 1;
                 oldCounter[1] += executeTime;
-                methodCounterMap.put(methodName, oldCounter);
             }
         }
     }
