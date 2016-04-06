@@ -18,6 +18,7 @@ import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
 import javassist.LoaderClassPath;
+import javassist.NotFoundException;
 
 import com.thunisoft.agent.ConfigUtils;
 
@@ -36,14 +37,6 @@ public class ThunisoftClassFileTransformer implements ClassFileTransformer {
     private static byte[] logUtilsClassBytes = null;
 
     private static byte[] logUtilsOutputRunnableClassBytes = null;
-
-    // private Set<ClassLoader> loadedClassLoaders = new HashSet<ClassLoader>();
-    // private WeakHashMap<ClassLoader, Object> loadedClassLoaders = new
-    // WeakHashMap<ClassLoader, Object>();
-
-    // private static final Object EXISTS = new Object();
-
-    // private boolean classLoaderInited;
 
     public static void setLogUtilsClassBytes(byte[] logUtilsClassBytes,
             byte[] runnableBytes) {
@@ -71,7 +64,7 @@ public class ThunisoftClassFileTransformer implements ClassFileTransformer {
             loader = Thread.currentThread().getContextClassLoader();
         }
         loadLogUtilsClass(loader);
-        byteCode = aopLog(className, byteCode);
+        byteCode = aopLog(loader, className, byteCode);
         return byteCode;
     }
 
@@ -81,7 +74,7 @@ public class ThunisoftClassFileTransformer implements ClassFileTransformer {
         try {
             logUtilsClass = loader.loadClass(LOG_UTILS);
         } catch (ClassNotFoundException e1) {
-            e1.printStackTrace();
+            System.err.println(e1);
         }
         if (null == logUtilsClass) {
             ClassPool cp = ClassPool.getDefault();
@@ -110,23 +103,29 @@ public class ThunisoftClassFileTransformer implements ClassFileTransformer {
                 e.printStackTrace();
             }
         }
-        if(null != logUtilsClass){
-            try{
+        if (null != logUtilsClass) {
+            try {
                 Method initMethod = logUtilsClass.getDeclaredMethod("init",
                         String.class, int.class, boolean.class);
                 initMethod.invoke(logUtilsClass, ConfigUtils.getLogFileName(),
                         ConfigUtils.getLogInterval(),
                         ConfigUtils.isLogAvgExecuteTime());
-            }catch(Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
     }
 
-    private byte[] aopLog(String className, byte[] byteCode) {
+    private byte[] aopLog(ClassLoader loader, String className, byte[] byteCode) {
         try {
             ClassPool cp = ClassPool.getDefault();
-            CtClass cc = cp.get(className);
+            CtClass cc = null;
+            try {
+                cc = cp.get(className);
+            } catch (NotFoundException e) {
+                cp.insertClassPath(new LoaderClassPath(loader));
+                cc = cp.get(className);
+            }
             if (null != cc) {
                 if (!cc.isInterface()) {
                     CtMethod[] methods = cc.getDeclaredMethods();
