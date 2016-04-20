@@ -2,7 +2,7 @@
 It's a simple java agent to monitor every method's execute frequency and time consuming.
 As a developer,you probably know your code's performance roughly,but you never know it for sure.How many times your code was 
 invoked during a day,how much time do your code take just for one time running.
-SimpleAgent is a tool that can do the monitor work for you,it can monitor every method as you want to,and cost almost nothing
+simpleApm is a tool that can do the monitor work for you,it can monitor every method as you want to,and cost almost nothing
 to your system's performance,so you can use it not only during testing,but after release.
 
 you can use simpleAgent by config the java options like this： 
