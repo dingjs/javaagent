@@ -6,10 +6,11 @@
  */
 package com.thunisoft.agent.transformer;
 
+import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.IllegalClassFormatException;
-import java.lang.reflect.Method;
 import java.security.ProtectionDomain;
+import java.util.Collections;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -21,6 +22,7 @@ import javassist.LoaderClassPath;
 import javassist.NotFoundException;
 
 import com.thunisoft.agent.ConfigUtils;
+import com.thunisoft.agent.PojoDetector;
 
 /**
  * ThunisoftClassFileTransformer
@@ -31,18 +33,6 @@ import com.thunisoft.agent.ConfigUtils;
 public class ThunisoftClassFileTransformer implements ClassFileTransformer {
 
     private static final String LOG_UTILS = "com.thunisoft.agent.log.ExecuteLogUtils";
-
-    private static final String LOG_UTILS_OUTPUT_RUNNABLE = "com.thunisoft.agent.log.OutputLogRunnable";
-
-    private static byte[] logUtilsClassBytes = null;
-
-    private static byte[] logUtilsOutputRunnableClassBytes = null;
-
-    public static void setLogUtilsClassBytes(byte[] logUtilsClassBytes,
-            byte[] runnableBytes) {
-        ThunisoftClassFileTransformer.logUtilsClassBytes = logUtilsClassBytes;
-        ThunisoftClassFileTransformer.logUtilsOutputRunnableClassBytes = runnableBytes;
-    }
 
     /*
      * (non-Javadoc)
@@ -63,57 +53,9 @@ public class ThunisoftClassFileTransformer implements ClassFileTransformer {
         if (null == loader) {
             loader = Thread.currentThread().getContextClassLoader();
         }
-        loadLogUtilsClass(loader);
+        // loadLogUtilsClass(loader);
         byteCode = aopLog(loader, className, byteCode);
         return byteCode;
-    }
-
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    private void loadLogUtilsClass(ClassLoader loader) {
-        Class logUtilsClass = null;
-        try {
-            logUtilsClass = loader.loadClass(LOG_UTILS);
-        } catch (ClassNotFoundException e1) {
-            System.err.println(e1);
-        }
-        if (null == logUtilsClass) {
-            ClassPool cp = ClassPool.getDefault();
-            cp.insertClassPath(new LoaderClassPath(loader));
-            try {
-                Class highestClassLoaderClass = loader.getClass();
-                while (null != highestClassLoaderClass.getSuperclass()
-                        && !ClassLoader.class.equals(highestClassLoaderClass)) {
-                    highestClassLoaderClass = highestClassLoaderClass
-                            .getSuperclass();
-                }
-                highestClassLoaderClass.getDeclaredMethods();
-                Method defineClassMethod = highestClassLoaderClass
-                        .getDeclaredMethod("defineClass", String.class,
-                                byte[].class, int.class, int.class);
-                defineClassMethod.setAccessible(true);
-                defineClassMethod.invoke(loader, LOG_UTILS, logUtilsClassBytes,
-                        0, logUtilsClassBytes.length);
-
-                defineClassMethod.invoke(loader, LOG_UTILS_OUTPUT_RUNNABLE,
-                        logUtilsOutputRunnableClassBytes, 0,
-                        logUtilsOutputRunnableClassBytes.length);
-
-                logUtilsClass = loader.loadClass(LOG_UTILS);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        if (null != logUtilsClass) {
-            try {
-                Method initMethod = logUtilsClass.getDeclaredMethod("init",
-                        String.class, int.class, boolean.class);
-                initMethod.invoke(logUtilsClass, ConfigUtils.getLogFileName(),
-                        ConfigUtils.getLogInterval(),
-                        ConfigUtils.isLogAvgExecuteTime());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
     }
 
     private byte[] aopLog(ClassLoader loader, String className, byte[] byteCode) {
@@ -126,21 +68,36 @@ public class ThunisoftClassFileTransformer implements ClassFileTransformer {
                 cp.insertClassPath(new LoaderClassPath(loader));
                 cc = cp.get(className);
             }
-            if (null != cc) {
-                if (!cc.isInterface()) {
-                    CtMethod[] methods = cc.getDeclaredMethods();
-                    if (null != methods && methods.length > 0) {
-                        for (CtMethod m : methods) {
-                            aopLog(className, m);
-                        }
-                        byteCode = cc.toBytecode();
-                    }
-                }
-                cc.detach();
-            }
+            byteCode = aopLog(cc, className, byteCode);
         } catch (Exception ex) {
             System.err.println(ex);
         }
+        return byteCode;
+    }
+
+    private byte[] aopLog(CtClass cc, String className, byte[] byteCode)
+            throws CannotCompileException, IOException {
+        if (null == cc) {
+            return byteCode;
+        }
+        if (!cc.isInterface()) {
+            CtMethod[] methods = cc.getDeclaredMethods();
+            if (null != methods && methods.length > 0) {
+                boolean isOpenPojoMonitor = ConfigUtils.isOpenPojoMonitor();
+                Set<String> getSetMethods = Collections.emptySet();
+                if (!isOpenPojoMonitor) {
+                    getSetMethods = PojoDetector.getPojoMethodNames(methods);
+                }
+                for (CtMethod m : methods) {
+                    if (isOpenPojoMonitor
+                            || !getSetMethods.contains(m.getName())) {
+                        aopLog(className, m);
+                    }
+                }
+                byteCode = cc.toBytecode();
+            }
+        }
+        cc.detach();
         return byteCode;
     }
 
@@ -169,7 +126,6 @@ public class ThunisoftClassFileTransformer implements ClassFileTransformer {
 
         Set<String> includes = ConfigUtils.getIncludePackages();
         if (null != includes && !includes.isEmpty()) {
-            // 可用责任链，但是还是算了
             // include package
             for (String packageName : includes) {
                 if (className.startsWith(packageName)) {

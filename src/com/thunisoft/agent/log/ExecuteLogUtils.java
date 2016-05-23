@@ -22,6 +22,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import com.thunisoft.agent.AgentUtils;
+import com.thunisoft.agent.ConfigUtils;
 
 /**
  * ExecuteLogUtils 这个class要加载到webapp的classloader中，不要增加任何第三方类的引用
@@ -31,7 +32,7 @@ import com.thunisoft.agent.AgentUtils;
  */
 public class ExecuteLogUtils {
 
-    private static BufferedWriter writer = null;
+    private static BufferedWriter counterLogWriter = null;
 
     private static long nextDayStartTimeMillis;
 
@@ -39,24 +40,17 @@ public class ExecuteLogUtils {
 
     private static long startTimemillis;
 
-    private static ScheduledThreadPoolExecutor logExecutor;
+    private static ScheduledThreadPoolExecutor counterLogExecutor;
 
     private static boolean isOutputingLog; // 是否在输出日志，为避免阻塞，第一版处理方案是输出日志时舍弃新的输入
 
     private static Map<String, Map<String, int[]>> exeuteCounterMap = new ConcurrentHashMap<String, Map<String, int[]>>();
 
-    // private Map<String, Map<String, Integer>> executeSumTimeMap = new
-    // ConcurrentHashMap<String, Map<String, Integer>>();
-
     private static final Object executeCounterLock = new Object();
-
-    // private static final Object methodExecuteCounterLock = new Object();
 
     private static final int BUFFER_SIZE = 256 * 1024;
 
     private static final String ENCODING = "UTF-8";
-
-    // private static int interval;
 
     private static long intervalInMillis;
 
@@ -74,13 +68,14 @@ public class ExecuteLogUtils {
      * @author dingjsh
      * @time 2015-7-30上午10:47:58
      */
-    public static synchronized void init(String logFileName, int interval,
-            boolean logAvgExecuteTime) {
+    public static synchronized void init() {
         if(inited){
             return;
         }
+        String logFileName = ConfigUtils.getLogFileName();
+        int interval = ConfigUtils.getLogInterval();
+        boolean logAvgExecuteTime = ConfigUtils.isLogAvgExecuteTime();
         ExecuteLogUtils.logFileName = logFileName;
-        // ExecuteLogUtils.interval = interval;
         ExecuteLogUtils.intervalInMillis = (long) interval * 1000;
         ExecuteLogUtils.logAvgExecuteTime = logAvgExecuteTime;
         if (AgentUtils.isBlank(logFileName)) {
@@ -90,24 +85,25 @@ public class ExecuteLogUtils {
         setNextDateStartTimeMillis();
         initWriter();
         startTimemillis = System.currentTimeMillis();
-        logExecutor = new ScheduledThreadPoolExecutor(1);
-        logExecutor.scheduleWithFixedDelay(new OutputLogRunnable(), interval,
+        counterLogExecutor = new ScheduledThreadPoolExecutor(1);
+        counterLogExecutor.scheduleWithFixedDelay(new OutputLogRunnable(), interval,
                 interval, TimeUnit.SECONDS);
         inited = true;
     }
-
+    
     public static void log(String className, String methodName,
             long currentTimemillis, int executeTime) {
         if (isOutputingLog) {
             return;
         }
-        // logExecuteTime(className, methodName, executeTime);
         logExecuteCounter(className, methodName, executeTime);
     }
 
     public static void main(String[] args) {
         // dingjsh commented in 20150730 模拟测试千万次或更多调用，记录执行时间，这样可大概估出对性能的影响
-        ExecuteLogUtils.init("g:\\tmp.log", 60, true);
+        String configFileName = "";
+        ConfigUtils.initProperties(configFileName);
+        ExecuteLogUtils.init();
         int classCount = 1000;
         String[] strArr = new String[classCount];
         for (int index = 0; index < classCount; index++) {
@@ -125,12 +121,12 @@ public class ExecuteLogUtils {
     }
 
     /**
-     * 输出日志
+     * 输出方法执行记数日志
      * 
      * @author dingjsh
      * @time 2015-7-28下午01:35:25
      */
-    public static void outputLog() {
+    public static void outputCounterLog() {
         isOutputingLog = true;
         // 如果下次日志记录时间是在第二天，则清空目前exeuteCounterMap的数据
         boolean needClearLog = System.currentTimeMillis() + intervalInMillis >= nextDayStartTimeMillis;
@@ -204,9 +200,9 @@ public class ExecuteLogUtils {
     private static void writeLog(String logValue, boolean newLine) {
         ensureLogFileUpToDate();
         try {
-            writer.write(logValue);
+            counterLogWriter.write(logValue);
             if (newLine) {
-                writer.newLine();
+                counterLogWriter.newLine();
             }
         } catch (IOException e) {
             System.err.println(e);
@@ -216,7 +212,7 @@ public class ExecuteLogUtils {
 
     private static void flushLog() {
         try {
-            writer.flush();
+            counterLogWriter.flush();
         } catch (IOException e) {
             System.err.println(e);
         }
@@ -229,11 +225,11 @@ public class ExecuteLogUtils {
         long currTimeMillis = System.currentTimeMillis();
         if (currTimeMillis >= nextDayStartTimeMillis) {
             try {
-                writer.flush();
+                counterLogWriter.flush();
             } catch (IOException e) {
                 System.err.println(e);
             } finally {
-                AgentUtils.closeQuietly(writer);
+                AgentUtils.closeQuietly(counterLogWriter);
             }
             initWriter();
             setNextDateStartTimeMillis();
@@ -242,15 +238,15 @@ public class ExecuteLogUtils {
 
     private static void initWriter() {
         try {
-            File logFile = getLogFile(logFileName, true);
-            writer = new BufferedWriter(new OutputStreamWriter(
+            File logFile = getCounterLogFile(logFileName, true);
+            counterLogWriter = new BufferedWriter(new OutputStreamWriter(
                     new FileOutputStream(logFile, true), ENCODING), BUFFER_SIZE);
         } catch (IOException e) {
             System.err.println(e);
         }
     }
 
-    private static File getLogFile(String logFileName, boolean appendDate)
+    private static File getCounterLogFile(String logFileName, boolean appendDate)
             throws IOException {
 
         String logFileNameWithDate = getCurrDateString();
@@ -262,6 +258,11 @@ public class ExecuteLogUtils {
         } else {
             logFileName = logFileName + "." + logFileNameWithDate + ".log";
         }
+        File logFile = getLogFile(logFileName);
+        return logFile;
+    }
+
+    private static File getLogFile(String logFileName) throws IOException {
         File logFile = new File(logFileName);
         if (logFile.isDirectory()) {
             System.err.println("【" + logFileName + "】是文件夹");

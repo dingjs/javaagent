@@ -21,7 +21,7 @@ public class OutputLogRunnable implements Runnable {
      */
     @Override
     public void run() {
-        ExecuteLogUtils.outputLog();
+        ExecuteLogUtils.outputCounterLog();
 
     }
 

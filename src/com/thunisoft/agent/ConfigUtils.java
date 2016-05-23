@@ -26,6 +26,8 @@ public class ConfigUtils {
     private static Set<String> excludeClassRegexs;
 
     private static Boolean logAvgExecuteTime;
+    
+    private static Boolean openPojoMonitor;
 
     public static void initProperties(String propertiesFileName) {
         props = getProperties(propertiesFileName);
@@ -52,8 +54,6 @@ public class ConfigUtils {
         }
         if (AgentUtils.isNotBlank(propertiesFileName)) {
             try {
-                // dingjs added in 20131021 在加密工具同一个文件夹内
-                // 如果有相同的配置,文件夹的配置覆盖jar包内的配置
                 input = new FileInputStream(new File(propertiesFileName));
                 properties.load(input);
             } catch (Exception e) {
@@ -147,5 +147,22 @@ public class ConfigUtils {
             }
         }
         return logAvgExecuteTime.booleanValue();
+    }
+    
+    /**
+     * 是否开启pojo的监控
+     * @return
+     * @author dingjsh
+     */
+    public static boolean isOpenPojoMonitor() {
+        if (null == openPojoMonitor) {
+            synchronized (ConfigUtils.class) {
+                if (null == openPojoMonitor) {
+                    String value = getProperty(ConfigConsts.POJO_MONITOR_OPEN);
+                    openPojoMonitor = "true".equalsIgnoreCase(value);
+                }
+            }
+        }
+        return openPojoMonitor.booleanValue();
     }
 }
