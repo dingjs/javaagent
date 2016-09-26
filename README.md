@@ -1,8 +1,8 @@
-# simpleApm
-It's a simple java agent to monitor every method's execute frequency and time consuming.
+# javaagent
+It's a simple and elegant java agent to monitor every method's execute frequency and time consuming.
 As a developer,you probably know your code's performance roughly,but you never know it for sure.How many times your code was 
-invoked during a day,how much time do your code take just for one time running.
-simpleApm is a tool that can do the monitor work for you,it can monitor every method as you want to,and cost almost nothing
+invoked during a day,how much cpu time do your code take just for one time running.
+This javaagent is a tool that can do the monitor work for you,it can monitor every method as you want to,and cost almost nothing
 to your system's performance,so you can use it not only during testing,but after release.
 
 you can use simpleAgent by config the java options like this： 
@@ -16,7 +16,7 @@ the agent.properties look like as follows:
     agent.exclude.package=
     #the packages you want to monitor,the agent only monitor the packages and subpackages 
     #that configed in here,multi config separated by semicolon 
-    agent.include.package=com.thunisoft
+    agent.include.package=com.dingjsh
     #the log file name,it will add current date automatically
     agent.log.file=d\:\\agent.log
     #how much seconds per time do the log output
