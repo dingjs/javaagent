@@ -4,13 +4,41 @@
 
 	<groupId>com.thunisoft</groupId>
 	<artifactId>simple-apm</artifactId>
-	<version>1.0.3</version>
+	<version>1.0.4</version>
 	<packaging>jar</packaging>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.build.target>1.6</project.build.target>
 	</properties>
+	<organization>
+		<name>BeiJing Thunisoft Corporation Limited</name>
+		<url>http://www.thunisoft.com</url>
+	</organization>
+	<developers>
+		<developer>
+			<id>dingjsh</id>
+			<name>¶¡½¨Ë®</name>
+			<email>47954233@qq.com</email>
+		</developer>
+	</developers>
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+	<distributionManagement>
+		<repository>
+			<id>public-repo</id>
+			<url>http://repo.thunisoft.com/maven2/content/repositories/cmptreleases/</url>
+		</repository>
+		<snapshotRepository>
+			<id>public-snapshots</id>
+			<url>http://repo.thunisoft.com/maven2/content/repositories/snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
 
 	<build>
 		<sourceDirectory>src</sourceDirectory>

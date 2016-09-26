@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.thunisoft.agent.AgentUtils;
 import com.thunisoft.agent.ConfigUtils;
+import com.thunisoft.agent.NamedThreadFactory;
 
 /**
  * ExecuteLogUtils 这个class要加载到webapp的classloader中，不要增加任何第三方类的引用
@@ -85,7 +86,7 @@ public class ExecuteLogUtils {
         setNextDateStartTimeMillis();
         initWriter();
         startTimemillis = System.currentTimeMillis();
-        counterLogExecutor = new ScheduledThreadPoolExecutor(1);
+        counterLogExecutor = new ScheduledThreadPoolExecutor(1,new NamedThreadFactory("pool-thread-agent-log", true));
         counterLogExecutor.scheduleWithFixedDelay(new OutputLogRunnable(), interval,
                 interval, TimeUnit.SECONDS);
         inited = true;
