@@ -18,7 +18,7 @@
 	<developers>
 		<developer>
 			<id>dingjsh</id>
-			<name>∂°Ω®ÀÆ</name>
+			<name>‰∏ÅÂª∫Ê∞¥</name>
 			<email>47954233@qq.com</email>
 		</developer>
 	</developers>
@@ -160,7 +160,6 @@
 						<execution>
 							<id>default-jar</id>
 							<configuration>
-								<includeEmptyDirs>false</includeEmptyDirs>
 							</configuration>
 						</execution>
 					</executions>

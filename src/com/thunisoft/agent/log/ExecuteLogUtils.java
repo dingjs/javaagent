@@ -61,11 +61,7 @@ public class ExecuteLogUtils {
 
     /**
      * 初使化
-     * 
-     * @param logFileName
-     *            日志文件名
-     * @param interval
-     *            日志输出周期，为秒为单位
+     *
      * @author dingjsh
      * @time 2015-7-30上午10:47:58
      */
@@ -86,7 +82,7 @@ public class ExecuteLogUtils {
         setNextDateStartTimeMillis();
         initWriter();
         startTimemillis = System.currentTimeMillis();
-        counterLogExecutor = new ScheduledThreadPoolExecutor(1,new NamedThreadFactory("pool-thread-agent-log", true));
+        counterLogExecutor = new ScheduledThreadPoolExecutor(1,new NamedThreadFactory("pool-thread-agent-log", false));
         counterLogExecutor.scheduleWithFixedDelay(new OutputLogRunnable(), interval,
                 interval, TimeUnit.SECONDS);
         inited = true;
