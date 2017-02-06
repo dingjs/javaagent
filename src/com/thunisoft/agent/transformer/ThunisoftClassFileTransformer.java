@@ -106,11 +106,12 @@ public class ThunisoftClassFileTransformer implements ClassFileTransformer {
         if (null == m || m.isEmpty()) {
             return;
         }
-        m.addLocalVariable("elapsedTime", CtClass.longType);
-        m.insertBefore("elapsedTime = System.currentTimeMillis();");
-        m.insertAfter("elapsedTime = System.currentTimeMillis() - elapsedTime;"
+        //避免变量名重复
+        m.addLocalVariable("dingjsh_javaagent_elapsedTime", CtClass.longType);
+        m.insertBefore("dingjsh_javaagent_elapsedTime = java.lang.System.currentTimeMillis();");
+        m.insertAfter("dingjsh_javaagent_elapsedTime = java.lang.System.currentTimeMillis() - dingjsh_javaagent_elapsedTime;"
                 + LOG_UTILS + ".log(\"" + className + "\",\"" + m.getName()
-                + "\",System.currentTimeMillis(),(int)elapsedTime" + ");");
+                + "\",java.lang.System.currentTimeMillis(),(int)dingjsh_javaagent_elapsedTime" + ");");
     }
 
     /**

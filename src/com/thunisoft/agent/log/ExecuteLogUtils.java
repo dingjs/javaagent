@@ -82,7 +82,7 @@ public class ExecuteLogUtils {
         setNextDateStartTimeMillis();
         initWriter();
         startTimemillis = System.currentTimeMillis();
-        counterLogExecutor = new ScheduledThreadPoolExecutor(1,new NamedThreadFactory("pool-thread-agent-log", false));
+        counterLogExecutor = new ScheduledThreadPoolExecutor(1,new NamedThreadFactory("pool-thread-agent-log", true));
         counterLogExecutor.scheduleWithFixedDelay(new OutputLogRunnable(), interval,
                 interval, TimeUnit.SECONDS);
         inited = true;

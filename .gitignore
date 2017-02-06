@@ -14,3 +14,5 @@ target/maven-archiver/pom.properties
 *.prefs
 *.project
 .classpath
+/target
+/.settings
