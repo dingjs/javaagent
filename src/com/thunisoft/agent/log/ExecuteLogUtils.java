@@ -240,6 +240,7 @@ public class ExecuteLogUtils {
                     new FileOutputStream(logFile, true), ENCODING), BUFFER_SIZE);
         } catch (IOException e) {
             System.err.println(e);
+            throw new RuntimeException("无法初始化【"+logFileName+"】,建议您检查磁盘空间，或者手动删除该日志文件");
         }
     }
 

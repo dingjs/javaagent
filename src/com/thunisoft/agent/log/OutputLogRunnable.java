@@ -21,8 +21,11 @@ public class OutputLogRunnable implements Runnable {
      */
     @Override
     public void run() {
-        ExecuteLogUtils.outputCounterLog();
-
+        try{
+            ExecuteLogUtils.outputCounterLog();
+        }catch(Exception e){
+            System.err.println(e);
+        }
     }
 
 }
