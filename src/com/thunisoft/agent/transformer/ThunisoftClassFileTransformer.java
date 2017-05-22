@@ -14,12 +14,12 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import javassist.CannotCompileException;
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.CtMethod;
-import javassist.LoaderClassPath;
-import javassist.NotFoundException;
+import com.thunisoft.agent.javassist.CannotCompileException;
+import com.thunisoft.agent.javassist.ClassPool;
+import com.thunisoft.agent.javassist.CtClass;
+import com.thunisoft.agent.javassist.CtMethod;
+import com.thunisoft.agent.javassist.LoaderClassPath;
+import com.thunisoft.agent.javassist.NotFoundException;
 
 import com.thunisoft.agent.ConfigUtils;
 import com.thunisoft.agent.PojoDetector;
