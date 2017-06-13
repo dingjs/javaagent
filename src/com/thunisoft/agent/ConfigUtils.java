@@ -25,12 +25,11 @@ public class ConfigUtils {
 
     private static Set<String> excludeClassRegexs;
 
-    private static Boolean logAvgExecuteTime;
-    
-    private static Boolean openPojoMonitor;
-
     public static void initProperties(String propertiesFileName) {
         props = getProperties(propertiesFileName);
+        initExcluePackages();
+        initIncludePackages();
+        initExcludeClassRegexs();
     }
 
     public static String getProperty(String key) {
@@ -45,7 +44,7 @@ public class ConfigUtils {
         InputStream input = null;
         try {
             input = ConfigUtils.class.getClassLoader().getResourceAsStream(
-                    "props/agent.properties");
+                "props/agent.properties");
             properties.load(input);
         } catch (Exception e) {
             System.err.println("未找到默认配置");
@@ -66,42 +65,38 @@ public class ConfigUtils {
     }
 
     public static Set<String> getExcludePackages() {
-        if (null == excludePackages) {
-            synchronized (ConfigUtils.class) {
-                if (null == excludePackages) {
-                    String excludeDefault = getProperty(ConfigConsts.EXCLUDE_PACKAGE_DEFAULT);
-                    String excludes = getProperty(ConfigConsts.EXCLUDE_PACKAGE);
-                    Set<String> excludePackagesTmp = excludePackages = new HashSet<String>();
-                    if (AgentUtils.isNotBlank(excludeDefault)) {
-                        excludePackagesTmp.addAll(Arrays.asList(excludeDefault
-                                .split(";")));
-                    }
-                    if (AgentUtils.isNotBlank(excludes)) {
-                        excludePackagesTmp.addAll(Arrays.asList(excludes
-                                .split(";")));
-                    }
-                    excludePackages = excludePackagesTmp;
-                }
-            }
-        }
         return excludePackages;
     }
 
-    public static Set<String> getIncludePackages() {
-        if (null == includePackages) {
-            synchronized (ConfigUtils.class) {
-                if (null == includePackages) {
-                    String includes = getProperty(ConfigConsts.INCLUDE_PACKAGE);
-                    Set<String> includePackagesTmp = new HashSet<String>();
-                    if (AgentUtils.isNotBlank(includes)) {
-                        includePackagesTmp.addAll(Arrays.asList(includes
-                                .split(";")));
-                    }
-                    includePackages = includePackagesTmp;
-                }
+    private static void initExcluePackages() {
+        if (null == excludePackages) {
+            String excludeDefault = getProperty(ConfigConsts.EXCLUDE_PACKAGE_DEFAULT);
+            String excludes = getProperty(ConfigConsts.EXCLUDE_PACKAGE);
+            Set<String> excludePackagesTmp = excludePackages = new HashSet<String>();
+            if (AgentUtils.isNotBlank(excludeDefault)) {
+                excludePackagesTmp.addAll(Arrays.asList(excludeDefault
+                        .split(";")));
             }
+            if (AgentUtils.isNotBlank(excludes)) {
+                excludePackagesTmp.addAll(Arrays.asList(excludes.split(";")));
+            }
+            excludePackages = excludePackagesTmp;
         }
+    }
+
+    public static Set<String> getIncludePackages() {
         return includePackages;
+    }
+
+    private static void initIncludePackages() {
+        if (null == includePackages) {
+            String includes = getProperty(ConfigConsts.INCLUDE_PACKAGE);
+            Set<String> includePackagesTmp = new HashSet<String>();
+            if (AgentUtils.isNotBlank(includes)) {
+                includePackagesTmp.addAll(Arrays.asList(includes.split(";")));
+            }
+            includePackages = includePackagesTmp;
+        }
     }
 
     public static String getLogFileName() {
@@ -117,52 +112,38 @@ public class ConfigUtils {
     }
 
     public static Set<String> getExcludeClassRegexs() {
-        if (null == excludeClassRegexs) {
-            synchronized (ConfigUtils.class) {
-                if (null == excludeClassRegexs) {
-                    excludeClassRegexs = new HashSet<String>();
-                    String defaultRegex = getProperty(ConfigConsts.EXCLUDE_CLASS_REGEX_DEFAULT);
-                    if (AgentUtils.isNotBlank(defaultRegex)) {
-                        excludeClassRegexs.addAll(Arrays.asList(defaultRegex
-                                .split(";")));
-                    }
-                    String excludeRegexStr = getProperty(ConfigConsts.EXCLUDE_CLASS_REGEX);
-                    if (AgentUtils.isNotBlank(excludeRegexStr)) {
-                        excludeClassRegexs.addAll(Arrays.asList(excludeRegexStr
-                                .split(";")));
-                    }
-                }
-            }
-        }
         return excludeClassRegexs;
     }
 
-    public static boolean isLogAvgExecuteTime() {
-        if (null == logAvgExecuteTime) {
-            synchronized (ConfigUtils.class) {
-                if (null == logAvgExecuteTime) {
-                    String value = getProperty(ConfigConsts.LOG_AVG_EXECUTE_TIME);
-                    logAvgExecuteTime = "true".equalsIgnoreCase(value);
-                }
+    private static void initExcludeClassRegexs() {
+        if (null == excludeClassRegexs) {
+           Set<String> excludeClassRegexsTemp = new HashSet<String>();
+            String defaultRegex = getProperty(ConfigConsts.EXCLUDE_CLASS_REGEX_DEFAULT);
+            if (AgentUtils.isNotBlank(defaultRegex)) {
+                excludeClassRegexsTemp
+                        .addAll(Arrays.asList(defaultRegex.split(";")));
             }
+            String excludeRegexStr = getProperty(ConfigConsts.EXCLUDE_CLASS_REGEX);
+            if (AgentUtils.isNotBlank(excludeRegexStr)) {
+                excludeClassRegexsTemp.addAll(Arrays.asList(excludeRegexStr
+                        .split(";")));
+            }
+            excludeClassRegexs = excludeClassRegexsTemp;
         }
-        return logAvgExecuteTime.booleanValue();
     }
-    
+
+    public static boolean isLogAvgExecuteTime() {
+        String value = getProperty(ConfigConsts.LOG_AVG_EXECUTE_TIME);
+        return "true".equalsIgnoreCase(value);
+    }
+
     /**
      * 是否开启pojo的监控
      * @return
      * @author dingjsh
      */
     public static boolean isOpenPojoMonitor() {
-        if (null == openPojoMonitor) {
-            synchronized (ConfigUtils.class) {
-                if (null == openPojoMonitor) {
-                    String value = getProperty(ConfigConsts.POJO_MONITOR_OPEN);
-                    openPojoMonitor = "true".equalsIgnoreCase(value);
-                }
-            }
-        }
-        return openPojoMonitor.booleanValue();
+        String value = getProperty(ConfigConsts.POJO_MONITOR_OPEN);
+        return "true".equalsIgnoreCase(value);
     }
 }
