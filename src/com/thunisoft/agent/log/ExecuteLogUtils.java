@@ -96,27 +96,6 @@ public class ExecuteLogUtils {
         logExecuteCounter(className, methodName, executeTime);
     }
 
-    public static void main(String[] args) {
-        // dingjsh commented in 20150730 模拟测试千万次或更多调用，记录执行时间，这样可大概估出对性能的影响
-        String configFileName = "";
-        ConfigUtils.initProperties(configFileName);
-        ExecuteLogUtils.init();
-        int classCount = 1000;
-        String[] strArr = new String[classCount];
-        for (int index = 0; index < classCount; index++) {
-            strArr[index] = "" + index;
-        }
-        long start = System.currentTimeMillis();
-
-        for (int i = 0; i < 10000; i++) {
-            for (int j = 0; j < classCount; j++) {
-                String str = strArr[j];
-                ExecuteLogUtils.log(str, str, start, 5);
-            }
-        }
-        System.out.println(System.currentTimeMillis() - start);
-    }
-
     /**
      * 输出方法执行记数日志
      * 
@@ -240,6 +219,7 @@ public class ExecuteLogUtils {
                     new FileOutputStream(logFile, true), ENCODING), BUFFER_SIZE);
         } catch (IOException e) {
             System.err.println(e);
+            throw new RuntimeException("无法初始化【"+logFileName+"】,建议您检查磁盘空间，或者手动删除该日志文件");
         }
     }
 

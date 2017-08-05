@@ -1,8 +1,7 @@
 /*
- * @(#)ThunisoftClassFileTransformer.java   2015-7-24 上午09:53:44
- * javaagent
- * Copyright 2015 Thuisoft, Inc. All rights reserved.
- * THUNISOFT PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ * @(#)ThunisoftClassFileTransformer.java 2015-7-24 上午09:53:44 javaagent
+ * Copyright 2015 Thuisoft, Inc. All rights reserved. THUNISOFT
+ * PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package com.thunisoft.agent.transformer;
 
@@ -14,12 +13,12 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import javassist.CannotCompileException;
-import javassist.ClassPool;
-import javassist.CtClass;
-import javassist.CtMethod;
-import javassist.LoaderClassPath;
-import javassist.NotFoundException;
+import com.thunisoft.agent.javassist.CannotCompileException;
+import com.thunisoft.agent.javassist.ClassPool;
+import com.thunisoft.agent.javassist.CtClass;
+import com.thunisoft.agent.javassist.CtMethod;
+import com.thunisoft.agent.javassist.LoaderClassPath;
+import com.thunisoft.agent.javassist.NotFoundException;
 
 import com.thunisoft.agent.ConfigUtils;
 import com.thunisoft.agent.PojoDetector;
@@ -33,6 +32,8 @@ import com.thunisoft.agent.PojoDetector;
 public class ThunisoftClassFileTransformer implements ClassFileTransformer {
 
     private static final String LOG_UTILS = "com.thunisoft.agent.log.ExecuteLogUtils";
+
+    private static final String AGENT_PACKAGE_NAME = "com.thunisoft.agent";
 
     /*
      * (non-Javadoc)
@@ -75,8 +76,7 @@ public class ThunisoftClassFileTransformer implements ClassFileTransformer {
         return byteCode;
     }
 
-    private byte[] aopLog(CtClass cc, String className, byte[] byteCode)
-            throws CannotCompileException, IOException {
+    private byte[] aopLog(CtClass cc, String className, byte[] byteCode) throws CannotCompileException, IOException {
         if (null == cc) {
             return byteCode;
         }
@@ -101,8 +101,7 @@ public class ThunisoftClassFileTransformer implements ClassFileTransformer {
         return byteCode;
     }
 
-    private void aopLog(String className, CtMethod m)
-            throws CannotCompileException {
+    private void aopLog(String className, CtMethod m) throws CannotCompileException {
         if (null == m || m.isEmpty()) {
             return;
         }
@@ -110,8 +109,13 @@ public class ThunisoftClassFileTransformer implements ClassFileTransformer {
         m.addLocalVariable("dingjsh_javaagent_elapsedTime", CtClass.longType);
         m.insertBefore("dingjsh_javaagent_elapsedTime = java.lang.System.currentTimeMillis();");
         m.insertAfter("dingjsh_javaagent_elapsedTime = java.lang.System.currentTimeMillis() - dingjsh_javaagent_elapsedTime;"
-                + LOG_UTILS + ".log(\"" + className + "\",\"" + m.getName()
-                + "\",java.lang.System.currentTimeMillis(),(int)dingjsh_javaagent_elapsedTime" + ");");
+                + LOG_UTILS
+                + ".log(\""
+                + className
+                + "\",\""
+                + m.getName()
+                + "\",java.lang.System.currentTimeMillis(),(int)dingjsh_javaagent_elapsedTime"
+                + ");");
     }
 
     /**
@@ -123,39 +127,43 @@ public class ThunisoftClassFileTransformer implements ClassFileTransformer {
      * @time 2015-7-27下午06:11:02
      */
     private boolean isNeedLogExecuteInfo(String className) {
-        boolean isNeeded = false;
-
+        //do not transform the agent class,prevent deadlock 
+        if (className.startsWith(AGENT_PACKAGE_NAME)) {
+            return false;
+        }
         Set<String> includes = ConfigUtils.getIncludePackages();
-        if (null != includes && !includes.isEmpty()) {
-            // include package
-            for (String packageName : includes) {
-                if (className.startsWith(packageName)) {
-                    isNeeded = true;
-                    break;
-                }
+        if (null == includes || includes.isEmpty()) {
+            return false;
+        }
+        
+        boolean isNeeded = false;
+        // include package
+        for (String packageName : includes) {
+            if (className.startsWith(packageName)) {
+                isNeeded = true;
+                break;
             }
-            // exclude package
-            if (isNeeded) {
-                Set<String> excludes = ConfigUtils.getExcludePackages();
-                if (null != excludes && !excludes.isEmpty()) {
-                    for (String packageName : excludes) {
-                        if (className.startsWith(packageName)) {
-                            isNeeded = false;
-                            break;
-                        }
+        }
+        // exclude package
+        if (isNeeded) {
+            Set<String> excludes = ConfigUtils.getExcludePackages();
+            if (null != excludes && !excludes.isEmpty()) {
+                for (String packageName : excludes) {
+                    if (className.startsWith(packageName)) {
+                        isNeeded = false;
+                        break;
                     }
                 }
             }
-
-            if (isNeeded) {
-                Set<String> excludeClassRegexs = ConfigUtils
-                        .getExcludeClassRegexs();
-                if (null != excludeClassRegexs && !excludeClassRegexs.isEmpty()) {
-                    for (String regex : excludeClassRegexs) {
-                        isNeeded = !Pattern.matches(regex, className);
-                        if (!isNeeded) {
-                            break;
-                        }
+        }
+        if (isNeeded) {
+            Set<String> excludeClassRegexs = ConfigUtils
+                    .getExcludeClassRegexs();
+            if (null != excludeClassRegexs && !excludeClassRegexs.isEmpty()) {
+                for (String regex : excludeClassRegexs) {
+                    isNeeded = !Pattern.matches(regex, className);
+                    if (!isNeeded) {
+                        break;
                     }
                 }
             }
