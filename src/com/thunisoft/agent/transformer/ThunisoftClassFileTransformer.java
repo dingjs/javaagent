@@ -13,15 +13,14 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import com.thunisoft.agent.ConfigUtils;
+import com.thunisoft.agent.PojoDetector;
 import com.thunisoft.agent.javassist.CannotCompileException;
 import com.thunisoft.agent.javassist.ClassPool;
 import com.thunisoft.agent.javassist.CtClass;
 import com.thunisoft.agent.javassist.CtMethod;
 import com.thunisoft.agent.javassist.LoaderClassPath;
 import com.thunisoft.agent.javassist.NotFoundException;
-
-import com.thunisoft.agent.ConfigUtils;
-import com.thunisoft.agent.PojoDetector;
 
 /**
  * ThunisoftClassFileTransformer
@@ -110,9 +109,9 @@ public class ThunisoftClassFileTransformer implements ClassFileTransformer {
         m.insertBefore("dingjsh_javaagent_elapsedTime = java.lang.System.currentTimeMillis();");
         m.insertAfter("dingjsh_javaagent_elapsedTime = java.lang.System.currentTimeMillis() - dingjsh_javaagent_elapsedTime;"
                 + LOG_UTILS
-                + ".log(\""
-                + className
-                + "\",\""
+                + ".log("
+                + "this.getClass().getName()"
+                + ",\""
                 + m.getName()
                 + "\",java.lang.System.currentTimeMillis(),(int)dingjsh_javaagent_elapsedTime"
                 + ");");
