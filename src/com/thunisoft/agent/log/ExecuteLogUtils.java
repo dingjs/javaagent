@@ -26,7 +26,7 @@ import com.thunisoft.agent.ConfigUtils;
 import com.thunisoft.agent.NamedThreadFactory;
 
 /**
- * ExecuteLogUtils 这个class要加载到webapp的classloader中，不要增加任何第三方类的引用
+ * ExecuteLogUtils 
  * 
  * @author dingjsh
  * @time 2015-7-27下午05:57:01

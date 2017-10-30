@@ -18,6 +18,7 @@ import com.thunisoft.agent.javassist.ClassPool;
 import com.thunisoft.agent.javassist.CtClass;
 import com.thunisoft.agent.javassist.CtMethod;
 import com.thunisoft.agent.javassist.LoaderClassPath;
+import com.thunisoft.agent.javassist.Modifier;
 import com.thunisoft.agent.javassist.NotFoundException;
 
 import com.thunisoft.agent.ConfigUtils;
@@ -101,19 +102,21 @@ public class ThunisoftClassFileTransformer implements ClassFileTransformer {
         return byteCode;
     }
 
-    private void aopLog(String className, CtMethod m) throws CannotCompileException {
+    private void aopLog(String className,
+            CtMethod m) throws CannotCompileException {
         if (null == m || m.isEmpty()) {
             return;
         }
+        boolean isMethodStatic = Modifier.isStatic(m.getModifiers());
+        String aopClassName = isMethodStatic ? "\"" + className + "\""
+                : "this.getClass().getName()";
         //避免变量名重复
         m.addLocalVariable("dingjsh_javaagent_elapsedTime", CtClass.longType);
-        m.insertBefore("dingjsh_javaagent_elapsedTime = java.lang.System.currentTimeMillis();");
-        m.insertAfter("dingjsh_javaagent_elapsedTime = java.lang.System.currentTimeMillis() - dingjsh_javaagent_elapsedTime;"
-                + LOG_UTILS
-                + ".log(\""
-                + className
-                + "\",\""
-                + m.getName()
+        m.insertBefore(
+            "dingjsh_javaagent_elapsedTime = java.lang.System.currentTimeMillis();");
+        m.insertAfter(
+            "dingjsh_javaagent_elapsedTime = java.lang.System.currentTimeMillis() - dingjsh_javaagent_elapsedTime;");
+        m.insertAfter(LOG_UTILS + ".log(" + aopClassName + ",\"" + m.getName()
                 + "\",java.lang.System.currentTimeMillis(),(int)dingjsh_javaagent_elapsedTime"
                 + ");");
     }
