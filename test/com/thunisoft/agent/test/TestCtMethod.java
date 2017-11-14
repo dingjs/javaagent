@@ -27,6 +27,7 @@ public class TestCtMethod {
                 Assert.assertTrue(methodName+" is static method", Modifier.isStatic(ctMethod.getModifiers()));
             }
         }
+        System.out.println("staticMethodTest is successful");
     }
 
     private static void privateStatic(){
