@@ -26,4 +26,5 @@ agent.pojo.monitor.open=false
 ```
 ### JQL
 JQL is a python tool to analyze the agent logs, developed by my collegue jinlei. Read [JQL complete guide](https://github.com/dingjs/javaagent/tree/master/resources/JQL)for the details if you can read Chinese.
-![JQL](https://github.com/dingjs/javaagent/tree/master/resources/images/JQL.png)
+
+![JQL screenshot](https://github.com/dingjs/javaagent/tree/master/resources/images/JQL.png)

@@ -24,6 +24,7 @@ agent.pojo.monitor.open=false
 ```
 ### JQL
 JQL是用金雷同学用python写的一个agent日志分析工具，你可以用这个工具做查询、排序、limit等。详细用法，请参考[JQL完全指南](https://github.com/dingjs/javaagent/tree/master/resources/JQL)。
-![JQL](https://github.com/dingjs/javaagent/tree/master/resources/images/JQL.png)
+
+![JQL截图](https://github.com/dingjs/javaagent/tree/master/resources/images/JQL.png)
    
    
