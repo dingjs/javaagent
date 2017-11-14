@@ -16,4 +16,6 @@ target/maven-archiver/pom.properties
 .classpath
 /target
 /.settings
+/.idea
+*.log
 
