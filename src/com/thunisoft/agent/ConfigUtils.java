@@ -25,6 +25,10 @@ public class ConfigUtils {
 
     private static Set<String> excludeClassRegexs;
 
+    private ConfigUtils() {
+        super();
+    }
+
     public static void initProperties(String propertiesFileName) {
         props = getProperties(propertiesFileName);
         initExcluePackages();
@@ -43,8 +47,7 @@ public class ConfigUtils {
         Properties properties = new Properties();
         InputStream input = null;
         try {
-            input = ConfigUtils.class.getClassLoader().getResourceAsStream(
-                "props/agent.properties");
+            input = ConfigUtils.class.getClassLoader().getResourceAsStream("props/agent.properties");
             properties.load(input);
         } catch (Exception e) {
             System.err.println("未找到默认配置");
@@ -72,15 +75,13 @@ public class ConfigUtils {
         if (null == excludePackages) {
             String excludeDefault = getProperty(ConfigConsts.EXCLUDE_PACKAGE_DEFAULT);
             String excludes = getProperty(ConfigConsts.EXCLUDE_PACKAGE);
-            Set<String> excludePackagesTmp = excludePackages = new HashSet<String>();
-            if (AgentUtils.isNotBlank(excludeDefault)) {
-                excludePackagesTmp.addAll(Arrays.asList(excludeDefault
-                        .split(";")));
+            excludePackages = new HashSet<String>();
+            if (null != excludeDefault && AgentUtils.isNotBlank(excludeDefault)) {
+                excludePackages.addAll(Arrays.asList(excludeDefault.split(";")));
             }
-            if (AgentUtils.isNotBlank(excludes)) {
-                excludePackagesTmp.addAll(Arrays.asList(excludes.split(";")));
+            if (null != excludes && AgentUtils.isNotBlank(excludes)) {
+                excludePackages.addAll(Arrays.asList(excludes.split(";")));
             }
-            excludePackages = excludePackagesTmp;
         }
     }
 
@@ -91,11 +92,10 @@ public class ConfigUtils {
     private static void initIncludePackages() {
         if (null == includePackages) {
             String includes = getProperty(ConfigConsts.INCLUDE_PACKAGE);
-            Set<String> includePackagesTmp = new HashSet<String>();
-            if (AgentUtils.isNotBlank(includes)) {
-                includePackagesTmp.addAll(Arrays.asList(includes.split(";")));
+            includePackages = new HashSet<String>();
+            if (null != includes && AgentUtils.isNotBlank(includes)) {
+                includePackages.addAll(Arrays.asList(includes.split(";")));
             }
-            includePackages = includePackagesTmp;
         }
     }
 
@@ -117,16 +117,14 @@ public class ConfigUtils {
 
     private static void initExcludeClassRegexs() {
         if (null == excludeClassRegexs) {
-           Set<String> excludeClassRegexsTemp = new HashSet<String>();
+            Set<String> excludeClassRegexsTemp = new HashSet<String>();
             String defaultRegex = getProperty(ConfigConsts.EXCLUDE_CLASS_REGEX_DEFAULT);
-            if (AgentUtils.isNotBlank(defaultRegex)) {
-                excludeClassRegexsTemp
-                        .addAll(Arrays.asList(defaultRegex.split(";")));
+            if (null != defaultRegex && AgentUtils.isNotBlank(defaultRegex)) {
+                excludeClassRegexsTemp.addAll(Arrays.asList(defaultRegex.split(";")));
             }
             String excludeRegexStr = getProperty(ConfigConsts.EXCLUDE_CLASS_REGEX);
-            if (AgentUtils.isNotBlank(excludeRegexStr)) {
-                excludeClassRegexsTemp.addAll(Arrays.asList(excludeRegexStr
-                        .split(";")));
+            if (null != excludeRegexStr && AgentUtils.isNotBlank(excludeRegexStr)) {
+                excludeClassRegexsTemp.addAll(Arrays.asList(excludeRegexStr.split(";")));
             }
             excludeClassRegexs = excludeClassRegexsTemp;
         }
@@ -139,11 +137,25 @@ public class ConfigUtils {
 
     /**
      * 是否开启pojo的监控
+     * 
      * @return
      * @author dingjsh
      */
     public static boolean isOpenPojoMonitor() {
         String value = getProperty(ConfigConsts.POJO_MONITOR_OPEN);
+        return "true".equalsIgnoreCase(value);
+    }
+    
+    /**
+     * ConfigUtils
+     * @description 是否采用nanoTime来记录方法的执行时间
+     * @return
+     * @author dingjsh
+     * @date 2018年5月25日 下午2:08:33
+     * @version 1.2.0
+     */
+    public static boolean isUsingNanoTime(){
+        String  value = getProperty(ConfigConsts.LOG_TIME_NANO);
         return "true".equalsIgnoreCase(value);
     }
 }

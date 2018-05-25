@@ -1,8 +1,6 @@
 /*
- * @(#)ExecuteLogUtils.java 2015-7-27 下午05:57:01
- * javaagent
- * Copyright 2015 Thuisoft, Inc. All rights reserved.
- * THUNISOFT PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ * @(#)ExecuteLogUtils.java 2015-7-27 下午05:57:01 javaagent Copyright 2015 Thuisoft, Inc. All rights reserved. THUNISOFT
+ * PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package com.thunisoft.agent.log;
 
@@ -26,7 +24,7 @@ import com.thunisoft.agent.ConfigUtils;
 import com.thunisoft.agent.NamedThreadFactory;
 
 /**
- * ExecuteLogUtils 
+ * ExecuteLogUtils
  * 
  * @author dingjsh
  * @time 2015-7-27下午05:57:01
@@ -45,7 +43,8 @@ public class ExecuteLogUtils {
 
     private static boolean isOutputingLog; // 是否在输出日志，为避免阻塞，第一版处理方案是输出日志时舍弃新的输入
 
-    private static Map<String, Map<String, int[]>> exeuteCounterMap = new ConcurrentHashMap<String, Map<String, int[]>>();
+    private static Map<String, Map<String, long[]>> exeuteCounterMap
+        = new ConcurrentHashMap<String, Map<String, long[]>>();
 
     private static final Object executeCounterLock = new Object();
 
@@ -55,8 +54,10 @@ public class ExecuteLogUtils {
 
     private static long intervalInMillis;
 
+    private static boolean isUsingNanoTime = false;
+
     private static boolean logAvgExecuteTime = false;
-    
+
     private static boolean inited = false;
 
     /**
@@ -66,15 +67,14 @@ public class ExecuteLogUtils {
      * @time 2015-7-30上午10:47:58
      */
     public static synchronized void init() {
-        if(inited){
+        if (inited) {
             return;
         }
-        String logFileName = ConfigUtils.getLogFileName();
+        logFileName = ConfigUtils.getLogFileName();
         int interval = ConfigUtils.getLogInterval();
-        boolean logAvgExecuteTime = ConfigUtils.isLogAvgExecuteTime();
-        ExecuteLogUtils.logFileName = logFileName;
-        ExecuteLogUtils.intervalInMillis = (long) interval * 1000;
-        ExecuteLogUtils.logAvgExecuteTime = logAvgExecuteTime;
+        logAvgExecuteTime = ConfigUtils.isLogAvgExecuteTime();
+        intervalInMillis = (long)interval * 1000;
+        isUsingNanoTime = ConfigUtils.isUsingNanoTime();
         if (AgentUtils.isBlank(logFileName)) {
             System.err.println("日志文件名为空");
             throw new RuntimeException("日志文件名为空");
@@ -82,14 +82,12 @@ public class ExecuteLogUtils {
         setNextDateStartTimeMillis();
         initWriter();
         startTimemillis = System.currentTimeMillis();
-        counterLogExecutor = new ScheduledThreadPoolExecutor(1,new NamedThreadFactory("pool-thread-agent-log", true));
-        counterLogExecutor.scheduleWithFixedDelay(new OutputLogRunnable(), interval,
-                interval, TimeUnit.SECONDS);
+        counterLogExecutor = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("pool-thread-agent-log", true));
+        counterLogExecutor.scheduleWithFixedDelay(new OutputLogRunnable(), interval, interval, TimeUnit.SECONDS);
         inited = true;
     }
-    
-    public static void log(String className, String methodName,
-            long currentTimemillis, int executeTime) {
+
+    public static void log(String className, String methodName, long currentTimemillis, long executeTime) {
         if (isOutputingLog) {
             return;
         }
@@ -109,33 +107,30 @@ public class ExecuteLogUtils {
 
         writeLog("-----------------------");// 分隔线
         writeLog("startTime:{" + foramteTimeMillis(startTimemillis) + "}");
-        Iterator<Map.Entry<String, Map<String, int[]>>> ite = exeuteCounterMap
-                .entrySet().iterator();
+        Iterator<Map.Entry<String, Map<String, long[]>>> ite = exeuteCounterMap.entrySet().iterator();
         while (ite.hasNext()) {
-            Map.Entry<String, Map<String, int[]>> entry = ite.next();
+            Map.Entry<String, Map<String, long[]>> entry = ite.next();
             String className = entry.getKey();
-            Map<String, int[]> method2ExecuteMap = entry.getValue();
+            Map<String, long[]> method2ExecuteMap = entry.getValue();
             writeLog("{");
             writeLog("className:{" + className + "}");
-            Iterator<Map.Entry<String, int[]>> method2ExecuteIte = method2ExecuteMap
-                    .entrySet().iterator();
+            Iterator<Map.Entry<String, long[]>> method2ExecuteIte = method2ExecuteMap.entrySet().iterator();
             while (method2ExecuteIte.hasNext()) {
-                Map.Entry<String, int[]> methodEntry = method2ExecuteIte.next();
+                Map.Entry<String, long[]> methodEntry = method2ExecuteIte.next();
                 String methodName = methodEntry.getKey();
-                int[] executeCounter = methodEntry.getValue();
-                String logInfo = "methodName:{" + methodName + "},counter:{"
-                        + executeCounter[0] + "},time:{" + executeCounter[1]
-                        + "}";
-                if (logAvgExecuteTime && executeCounter[0] > 0) {
-                    logInfo += ",avg:{"
-                            + (executeCounter[1] / executeCounter[0]) + "}";
+                long[] executeCounter = methodEntry.getValue();
+                long counter = executeCounter[0];
+                long timeInMillis = isUsingNanoTime ? executeCounter[1] / 1000000 : executeCounter[1];
+                String logInfo
+                    = "methodName:{" + methodName + "},counter:{" + counter + "},time:{" + timeInMillis + "}";
+                if (logAvgExecuteTime && counter > 0) {
+                    logInfo += ",avg:{" + (timeInMillis / counter) + "}";
                 }
                 writeLog(logInfo);
             }
             writeLog("}");
         }
-        writeLog("endTime:{" + foramteTimeMillis(System.currentTimeMillis())
-                + "}");
+        writeLog("endTime:{" + foramteTimeMillis(System.currentTimeMillis()) + "}");
         flushLog();
         if (needClearLog) {
             exeuteCounterMap.clear();
@@ -144,14 +139,13 @@ public class ExecuteLogUtils {
         isOutputingLog = false;
     }
 
-    private static void logExecuteCounter(String className, String methodName,
-            int executeTime) {
-        Map<String, int[]> methodCounterMap = exeuteCounterMap.get(className);
+    private static void logExecuteCounter(String className, String methodName, long executeTime) {
+        Map<String, long[]> methodCounterMap = exeuteCounterMap.get(className);
         if (null == methodCounterMap) {
             synchronized (executeCounterLock) {
                 methodCounterMap = exeuteCounterMap.get(className);
                 if (null == methodCounterMap) {
-                    methodCounterMap = new ConcurrentHashMap<String, int[]>();
+                    methodCounterMap = new ConcurrentHashMap<String, long[]>();
                     exeuteCounterMap.put(className, methodCounterMap);
                 }
             }
@@ -159,9 +153,9 @@ public class ExecuteLogUtils {
         // 不采用统一的锁，而用methodCounterMap做锁，这样不同class对应的Map可以并发执行，大大提高并发能力
         // dingjsh commented in 20150729
         synchronized (methodCounterMap) {
-            int[] oldCounter = methodCounterMap.get(methodName);
+            long[] oldCounter = methodCounterMap.get(methodName);
             if (null == oldCounter) {
-                methodCounterMap.put(methodName, new int[] { 1, executeTime });
+                methodCounterMap.put(methodName, new long[] {1, executeTime});
             } else {
                 oldCounter[0] += 1;
                 oldCounter[1] += executeTime;
@@ -215,23 +209,21 @@ public class ExecuteLogUtils {
     private static void initWriter() {
         try {
             File logFile = getCounterLogFile(logFileName, true);
-            counterLogWriter = new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream(logFile, true), ENCODING), BUFFER_SIZE);
+            counterLogWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(logFile, true), ENCODING),
+                BUFFER_SIZE);
         } catch (IOException e) {
             System.err.println(e);
-            throw new RuntimeException("无法初始化【"+logFileName+"】,建议您检查磁盘空间，或者手动删除该日志文件");
+            throw new RuntimeException("无法初始化【" + logFileName + "】,建议您检查磁盘空间，或者手动删除该日志文件");
         }
     }
 
-    private static File getCounterLogFile(String logFileName, boolean appendDate)
-            throws IOException {
+    private static File getCounterLogFile(String logFileName, boolean appendDate) throws IOException {
 
         String logFileNameWithDate = getCurrDateString();
         int lastIndexOfDot = logFileName.lastIndexOf('.');
         if (lastIndexOfDot > 0) {
-            logFileName = logFileName.substring(0, lastIndexOfDot) + "."
-                    + logFileNameWithDate
-                    + logFileName.substring(lastIndexOfDot);
+            logFileName = logFileName.substring(0, lastIndexOfDot) + "." + logFileNameWithDate
+                + logFileName.substring(lastIndexOfDot);
         } else {
             logFileName = logFileName + "." + logFileNameWithDate + ".log";
         }

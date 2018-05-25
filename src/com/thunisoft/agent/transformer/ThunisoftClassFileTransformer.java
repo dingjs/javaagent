@@ -1,7 +1,6 @@
 /*
- * @(#)ThunisoftClassFileTransformer.java 2015-7-24 上午09:53:44 javaagent
- * Copyright 2015 Thuisoft, Inc. All rights reserved. THUNISOFT
- * PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ * @(#)ThunisoftClassFileTransformer.java 2015-7-24 上午09:53:44 javaagent Copyright 2015 Thuisoft, Inc. All rights
+ * reserved. THUNISOFT PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package com.thunisoft.agent.transformer;
 
@@ -44,9 +43,8 @@ public class ThunisoftClassFileTransformer implements ClassFileTransformer {
      * , java.lang.String, java.lang.Class, java.security.ProtectionDomain,
      * byte[])
      */
-    public byte[] transform(ClassLoader loader, String className,
-            Class<?> classBeingRedefined, ProtectionDomain protectionDomain,
-            byte[] classfileBuffer) throws IllegalClassFormatException {
+    public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
+        ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
         byte[] byteCode = classfileBuffer;
         className = className.replace('/', '.');
         if (!isNeedLogExecuteInfo(className)) {
@@ -55,7 +53,6 @@ public class ThunisoftClassFileTransformer implements ClassFileTransformer {
         if (null == loader) {
             loader = Thread.currentThread().getContextClassLoader();
         }
-        // loadLogUtilsClass(loader);
         byteCode = aopLog(loader, className, byteCode);
         return byteCode;
     }
@@ -90,8 +87,7 @@ public class ThunisoftClassFileTransformer implements ClassFileTransformer {
                     getSetMethods = PojoDetector.getPojoMethodNames(methods);
                 }
                 for (CtMethod m : methods) {
-                    if (isOpenPojoMonitor
-                            || !getSetMethods.contains(m.getName())) {
+                    if (isOpenPojoMonitor || !getSetMethods.contains(m.getName())) {
                         aopLog(className, m);
                     }
                 }
@@ -102,23 +98,22 @@ public class ThunisoftClassFileTransformer implements ClassFileTransformer {
         return byteCode;
     }
 
-    private void aopLog(String className,
-            CtMethod m) throws CannotCompileException {
+    private void aopLog(String className, CtMethod m) throws CannotCompileException {
         if (null == m || m.isEmpty()) {
             return;
         }
         boolean isMethodStatic = Modifier.isStatic(m.getModifiers());
-        String aopClassName = isMethodStatic ? "\"" + className + "\""
-                : "this.getClass().getName()";
-        //避免变量名重复
+        String aopClassName = isMethodStatic ? "\"" + className + "\"" : "this.getClass().getName()";
+        final String timeMethodStr
+            = ConfigUtils.isUsingNanoTime() ? "java.lang.System.nanoTime()" : "java.lang.System.currentTimeMillis()";
+
+        // 避免变量名重复
         m.addLocalVariable("dingjsh_javaagent_elapsedTime", CtClass.longType);
-        m.insertBefore(
-            "dingjsh_javaagent_elapsedTime = java.lang.System.currentTimeMillis();");
+        m.insertBefore("dingjsh_javaagent_elapsedTime = "+timeMethodStr+";");
         m.insertAfter(
-            "dingjsh_javaagent_elapsedTime = java.lang.System.currentTimeMillis() - dingjsh_javaagent_elapsedTime;");
+            "dingjsh_javaagent_elapsedTime = "+timeMethodStr+" - dingjsh_javaagent_elapsedTime;");
         m.insertAfter(LOG_UTILS + ".log(" + aopClassName + ",\"" + m.getName()
-                + "\",java.lang.System.currentTimeMillis(),(int)dingjsh_javaagent_elapsedTime"
-                + ");");
+            + "\",java.lang.System.currentTimeMillis(),(long)dingjsh_javaagent_elapsedTime" + ");");
     }
 
     /**
@@ -130,7 +125,7 @@ public class ThunisoftClassFileTransformer implements ClassFileTransformer {
      * @time 2015-7-27下午06:11:02
      */
     private boolean isNeedLogExecuteInfo(String className) {
-        //do not transform the agent class,prevent deadlock 
+        // do not transform the agent class,prevent deadlock
         if (className.startsWith(AGENT_PACKAGE_NAME)) {
             return false;
         }
@@ -138,7 +133,7 @@ public class ThunisoftClassFileTransformer implements ClassFileTransformer {
         if (null == includes || includes.isEmpty()) {
             return false;
         }
-        
+
         boolean isNeeded = false;
         // include package
         for (String packageName : includes) {
@@ -160,8 +155,7 @@ public class ThunisoftClassFileTransformer implements ClassFileTransformer {
             }
         }
         if (isNeeded) {
-            Set<String> excludeClassRegexs = ConfigUtils
-                    .getExcludeClassRegexs();
+            Set<String> excludeClassRegexs = ConfigUtils.getExcludeClassRegexs();
             if (null != excludeClassRegexs && !excludeClassRegexs.isEmpty()) {
                 for (String regex : excludeClassRegexs) {
                     isNeeded = !Pattern.matches(regex, className);

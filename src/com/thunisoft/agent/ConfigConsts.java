@@ -31,6 +31,8 @@ public interface ConfigConsts {
     String LOG_AVG_EXECUTE_TIME = "agent.log.avg.execute.time";
     
     String POJO_MONITOR_OPEN = "agent.pojo.monitor.open";
+    
+    String LOG_TIME_NANO = "agent.log.nano";
 
     int DEFAULT_LOG_INTERVAL = 600;
 
