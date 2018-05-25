@@ -18,6 +18,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.thunisoft.agent.AgentUtils;
 import com.thunisoft.agent.ConfigUtils;
@@ -43,8 +44,8 @@ public class ExecuteLogUtils {
 
     private static boolean isOutputingLog; // 是否在输出日志，为避免阻塞，第一版处理方案是输出日志时舍弃新的输入
 
-    private static Map<String, Map<String, long[]>> exeuteCounterMap
-        = new ConcurrentHashMap<String, Map<String, long[]>>();
+    private static Map<String, Map<String, AtomicLong[]>> exeuteCounterMap
+        = new ConcurrentHashMap<String, Map<String, AtomicLong[]>>();
 
     private static final Object executeCounterLock = new Object();
 
@@ -107,20 +108,21 @@ public class ExecuteLogUtils {
 
         writeLog("-----------------------");// 分隔线
         writeLog("startTime:{" + foramteTimeMillis(startTimemillis) + "}");
-        Iterator<Map.Entry<String, Map<String, long[]>>> ite = exeuteCounterMap.entrySet().iterator();
+        Iterator<Map.Entry<String, Map<String, AtomicLong[]>>> ite = exeuteCounterMap.entrySet().iterator();
         while (ite.hasNext()) {
-            Map.Entry<String, Map<String, long[]>> entry = ite.next();
+            Map.Entry<String, Map<String, AtomicLong[]>> entry = ite.next();
             String className = entry.getKey();
-            Map<String, long[]> method2ExecuteMap = entry.getValue();
+            Map<String, AtomicLong[]> method2ExecuteMap = entry.getValue();
             writeLog("{");
             writeLog("className:{" + className + "}");
-            Iterator<Map.Entry<String, long[]>> method2ExecuteIte = method2ExecuteMap.entrySet().iterator();
+            Iterator<Map.Entry<String, AtomicLong[]>> method2ExecuteIte = method2ExecuteMap.entrySet().iterator();
             while (method2ExecuteIte.hasNext()) {
-                Map.Entry<String, long[]> methodEntry = method2ExecuteIte.next();
+                Map.Entry<String, AtomicLong[]> methodEntry = method2ExecuteIte.next();
                 String methodName = methodEntry.getKey();
-                long[] executeCounter = methodEntry.getValue();
-                long counter = executeCounter[0];
-                long timeInMillis = isUsingNanoTime ? executeCounter[1] / 1000000 : executeCounter[1];
+                AtomicLong[] executeCounter = methodEntry.getValue();
+                long counter = executeCounter[0].longValue();
+                long timeInMillis
+                    = isUsingNanoTime ? executeCounter[1].longValue() / 1000000 : executeCounter[1].longValue();
                 String logInfo
                     = "methodName:{" + methodName + "},counter:{" + counter + "},time:{" + timeInMillis + "}";
                 if (logAvgExecuteTime && counter > 0) {
@@ -140,27 +142,47 @@ public class ExecuteLogUtils {
     }
 
     private static void logExecuteCounter(String className, String methodName, long executeTime) {
-        Map<String, long[]> methodCounterMap = exeuteCounterMap.get(className);
+        Map<String, AtomicLong[]> methodCounterMap = getOrCreateClassExecutesMapping(className);
+        AtomicLong[] counter = methodCounterMap.get(methodName);
+        if (null == counter) {
+            synchronized (methodCounterMap) {
+                counter = methodCounterMap.get(methodName);
+                if (null == counter) {
+                    methodCounterMap.put(methodName, new AtomicLong[] {new AtomicLong(1), new AtomicLong(executeTime)});
+                } else {
+                    counter[0].incrementAndGet();
+                    counter[1].addAndGet(executeTime);
+                }
+            }
+        } else {
+            counter[0].incrementAndGet();
+            counter[1].addAndGet(executeTime);
+        }
+    }
+
+    /**
+     * 
+     * ExecuteLogUtils
+     * 
+     * @description 获得class和它的调用次数映射关系，如果exeuteCounterMap中没有，则创建一个并放入
+     * @param className 类名
+     * @return class和它的调用次数映射关系
+     * @author dingjsh
+     * @date 2018年5月25日 下午4:40:33
+     * @version 1.2.0
+     */
+    private static Map<String, AtomicLong[]> getOrCreateClassExecutesMapping(String className) {
+        Map<String, AtomicLong[]> methodCounterMap = exeuteCounterMap.get(className);
         if (null == methodCounterMap) {
             synchronized (executeCounterLock) {
                 methodCounterMap = exeuteCounterMap.get(className);
                 if (null == methodCounterMap) {
-                    methodCounterMap = new ConcurrentHashMap<String, long[]>();
+                    methodCounterMap = new ConcurrentHashMap<String, AtomicLong[]>();
                     exeuteCounterMap.put(className, methodCounterMap);
                 }
             }
         }
-        // 不采用统一的锁，而用methodCounterMap做锁，这样不同class对应的Map可以并发执行，大大提高并发能力
-        // dingjsh commented in 20150729
-        synchronized (methodCounterMap) {
-            long[] oldCounter = methodCounterMap.get(methodName);
-            if (null == oldCounter) {
-                methodCounterMap.put(methodName, new long[] {1, executeTime});
-            } else {
-                oldCounter[0] += 1;
-                oldCounter[1] += executeTime;
-            }
-        }
+        return methodCounterMap;
     }
 
     private static void writeLog(String logValue) {
