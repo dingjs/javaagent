@@ -8,7 +8,7 @@ java启动参数中就有jaaagent,你只需要在JAVA_OPTS中加入`-javaagent:/
 ### agent.properties说明
 ```
 # 你想监控哪些包，多个包用分号分隔，凡是不在该配置里的包中类都不会监控，所以不会去默认监控各种第三方包以及jre自带的类
-agent.include.package=com.thunisoft
+agent.include.package=com.xxx
 # 你不想监控的包，多个包用分号分隔，include.package减去exclude.package就是你监控的包
 agent.exclude.package=
 # 你不想监控的包的正则
