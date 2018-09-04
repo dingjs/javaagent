@@ -1,8 +1,8 @@
 /*
  * @(#)PojoDetector.java	2016-5-7 下午04:18:14
  * javaagent
- * Copyright 2016 Thuisoft, Inc. All rights reserved.
- * THUNISOFT PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ * Copyright 2016 wenshuo, Inc. All rights reserved.
+ * wenshuo PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package com.wenshuo.agent;
 

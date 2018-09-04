@@ -1,8 +1,8 @@
 /*
  * @(#)AgentUtils.java  2015-7-27 下午05:26:24
  * javaagent
- * Copyright 2015 Thuisoft, Inc. All rights reserved.
- * THUNISOFT PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
+ * Copyright 2015 wenshuo, Inc. All rights reserved.
+ * wenshuo PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package com.wenshuo.agent;
 

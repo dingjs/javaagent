@@ -1,5 +1,5 @@
 /*
- * @(#)ExecuteLogUtils.java 2015-7-27 下午05:57:01 javaagent Copyright 2015 Thuisoft, Inc. All rights reserved. THUNISOFT
+ * @(#)ExecuteLogUtils.java 2015-7-27 下午05:57:01 javaagent Copyright 2015 wenshuo, Inc. All rights reserved. wenshuo
  * PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package com.wenshuo.agent.log;

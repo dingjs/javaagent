@@ -1,7 +1,3 @@
-/*
- * @(#)ThunisoftClassFileTransformer.java 2015-7-24 上午09:53:44 javaagent Copyright 2015 Thuisoft, Inc. All rights
- * reserved. THUNISOFT PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
- */
 package com.wenshuo.agent.transformer;
 
 import java.io.IOException;
