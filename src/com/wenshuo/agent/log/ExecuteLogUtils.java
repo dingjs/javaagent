@@ -1,5 +1,5 @@
 /*
- * @(#)ExecuteLogUtils.java 2015-7-27 下午05:57:01 javaagent Copyright 2015 Thuisoft, Inc. All rights reserved. wenshuo
+ * @(#)ExecuteLogUtils.java 2015-7-27 下午05:57:01 javaagent Copyright 2015 wenshuo, Inc. All rights reserved. wenshuo
  * PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package com.wenshuo.agent.log;
@@ -9,12 +9,14 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.RandomAccessFile;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -42,10 +44,7 @@ public class ExecuteLogUtils {
 
     private static ScheduledThreadPoolExecutor counterLogExecutor;
 
-    private static boolean isOutputingLog; // 是否在输出日志，为避免阻塞，第一版处理方案是输出日志时舍弃新的输入
-
-    private static Map<String, Map<String, AtomicLong[]>> exeuteCounterMap
-        = new ConcurrentHashMap<String, Map<String, AtomicLong[]>>();
+    private static Map<String, Map<String, AtomicLong[]>> exeuteCounterMap;
 
     private static final Object executeCounterLock = new Object();
 
@@ -53,13 +52,15 @@ public class ExecuteLogUtils {
 
     private static final String ENCODING = "UTF-8";
 
-    private static long intervalInMillis;
-
     private static boolean isUsingNanoTime = false;
 
     private static boolean logAvgExecuteTime = false;
 
     private static boolean inited = false;
+
+    private ExecuteLogUtils() {
+        super();
+    }
 
     /**
      * 初使化
@@ -74,7 +75,6 @@ public class ExecuteLogUtils {
         logFileName = ConfigUtils.getLogFileName();
         int interval = ConfigUtils.getLogInterval();
         logAvgExecuteTime = ConfigUtils.isLogAvgExecuteTime();
-        intervalInMillis = (long)interval * 1000;
         isUsingNanoTime = ConfigUtils.isUsingNanoTime();
         if (AgentUtils.isBlank(logFileName)) {
             System.err.println("日志文件名为空");
@@ -82,6 +82,7 @@ public class ExecuteLogUtils {
         }
         setNextDateStartTimeMillis();
         initWriter();
+        exeuteCounterMap = new ConcurrentHashMap<String, Map<String, AtomicLong[]>>();
         startTimemillis = System.currentTimeMillis();
         counterLogExecutor = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("pool-thread-agent-log", true));
         counterLogExecutor.scheduleWithFixedDelay(new OutputLogRunnable(), interval, interval, TimeUnit.SECONDS);
@@ -89,9 +90,6 @@ public class ExecuteLogUtils {
     }
 
     public static void log(String className, String methodName, long currentTimemillis, long executeTime) {
-        if (isOutputingLog) {
-            return;
-        }
         logExecuteCounter(className, methodName, executeTime);
     }
 
@@ -101,44 +99,36 @@ public class ExecuteLogUtils {
      * @author dingjsh
      * @time 2015-7-28下午01:35:25
      */
-    public static void outputCounterLog() {
-        isOutputingLog = true;
-        // 如果下次日志记录时间是在第二天，则清空目前exeuteCounterMap的数据
-        boolean needClearLog = System.currentTimeMillis() + intervalInMillis >= nextDayStartTimeMillis;
+    public synchronized static void outputCounterLog() throws IOException {
+        Map<String, Map<String, AtomicLong[]>> exeuteCounterMapInner = exeuteCounterMap;
+        exeuteCounterMap = new ConcurrentHashMap<String, Map<String, AtomicLong[]>>();
+        String startTime = foramteTimeMillis(startTimemillis);
+        String endTime = foramteTimeMillis(System.currentTimeMillis());
+        long byteLength = removeJSONArrayEndBracket();
+        if (0 == byteLength) {
+            writeLog("[",true, startTimemillis);
+        }
 
-        writeLog("-----------------------");// 分隔线
-        writeLog("startTime:{" + foramteTimeMillis(startTimemillis) + "}");
-        Iterator<Map.Entry<String, Map<String, AtomicLong[]>>> ite = exeuteCounterMap.entrySet().iterator();
-        while (ite.hasNext()) {
+        Set<Map.Entry<String, Map<String, AtomicLong[]>>> entrySet = exeuteCounterMapInner.entrySet();
+        Iterator<Map.Entry<String, Map<String, AtomicLong[]>>> ite = entrySet.iterator();
+        int length = entrySet.size();
+        if (length > 0 && byteLength > 10) { // 说明文件不只是[],json数组中已经有内容
+            writeLog(",", startTimemillis);
+        }
+        for (int index = 0; ite.hasNext(); index++) {
             Map.Entry<String, Map<String, AtomicLong[]>> entry = ite.next();
             String className = entry.getKey();
             Map<String, AtomicLong[]> method2ExecuteMap = entry.getValue();
-            writeLog("{");
-            writeLog("className:{" + className + "}");
-            Iterator<Map.Entry<String, AtomicLong[]>> method2ExecuteIte = method2ExecuteMap.entrySet().iterator();
-            while (method2ExecuteIte.hasNext()) {
-                Map.Entry<String, AtomicLong[]> methodEntry = method2ExecuteIte.next();
-                String methodName = methodEntry.getKey();
-                AtomicLong[] executeCounter = methodEntry.getValue();
-                long counter = executeCounter[0].longValue();
-                long timeInMillis
-                    = isUsingNanoTime ? executeCounter[1].longValue() / 1000000 : executeCounter[1].longValue();
-                String logInfo
-                    = "methodName:{" + methodName + "},counter:{" + counter + "},time:{" + timeInMillis + "}";
-                if (logAvgExecuteTime && counter > 0) {
-                    logInfo += ",avg:{" + (timeInMillis / counter) + "}";
-                }
-                writeLog(logInfo);
+            String methodExecuteJson = MethodExecuteJSONformatter.getMethodExecuteJSON(className, method2ExecuteMap,
+                startTime, endTime, isUsingNanoTime, logAvgExecuteTime);
+            writeLog(methodExecuteJson, startTimemillis);
+            if (index < length - 1) {
+                writeLog(",", true, startTimemillis);
             }
-            writeLog("}");
         }
-        writeLog("endTime:{" + foramteTimeMillis(System.currentTimeMillis()) + "}");
-        flushLog();
-        if (needClearLog) {
-            exeuteCounterMap.clear();
-            startTimemillis = System.currentTimeMillis();
-        }
-        isOutputingLog = false;
+        writeLog("]", true,startTimemillis);
+        flushLogAndClose();
+        startTimemillis = System.currentTimeMillis();
     }
 
     private static void logExecuteCounter(String className, String methodName, long executeTime) {
@@ -185,12 +175,12 @@ public class ExecuteLogUtils {
         return methodCounterMap;
     }
 
-    private static void writeLog(String logValue) {
-        writeLog(logValue, true);
+    private static void writeLog(String logValue, long currTimeMillis) {
+        writeLog(logValue, false, currTimeMillis);
     }
 
-    private static void writeLog(String logValue, boolean newLine) {
-        ensureLogFileUpToDate();
+    private static void writeLog(String logValue, boolean newLine, long currTimeMillis) {
+        ensureLogFileUpToDate(currTimeMillis);
         try {
             counterLogWriter.write(logValue);
             if (newLine) {
@@ -202,23 +192,27 @@ public class ExecuteLogUtils {
 
     }
 
-    private static void flushLog() {
+    private static void flushLogAndClose() {
         try {
             counterLogWriter.flush();
         } catch (IOException e) {
             System.err.println(e);
+        } finally {
+            AgentUtils.closeQuietly(counterLogWriter);
+            counterLogWriter = null;
         }
     }
 
     /**
      * 确保日志文件没过时,日志文件都会加上日期后缀,如果当前日志文件
      */
-    private static void ensureLogFileUpToDate() {
-        long currTimeMillis = System.currentTimeMillis();
+    private static void ensureLogFileUpToDate(long currTimeMillis) {
         if (currTimeMillis >= nextDayStartTimeMillis) {
             try {
-                counterLogWriter.flush();
-            } catch (IOException e) {
+                if (null != counterLogWriter) {
+                    counterLogWriter.flush();
+                }
+            } catch (Exception e) {
                 System.err.println(e);
             } finally {
                 AgentUtils.closeQuietly(counterLogWriter);
@@ -226,11 +220,15 @@ public class ExecuteLogUtils {
             initWriter();
             setNextDateStartTimeMillis();
         }
+        if (null == counterLogWriter) {
+            initWriter();
+        }
+
     }
 
     private static void initWriter() {
         try {
-            File logFile = getCounterLogFile(logFileName, true);
+            File logFile = getCounterLogFile(logFileName);
             counterLogWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(logFile, true), ENCODING),
                 BUFFER_SIZE);
         } catch (IOException e) {
@@ -239,7 +237,7 @@ public class ExecuteLogUtils {
         }
     }
 
-    private static File getCounterLogFile(String logFileName, boolean appendDate) throws IOException {
+    private static File getCounterLogFile(String logFileName) throws IOException {
 
         String logFileNameWithDate = getCurrDateString();
         int lastIndexOfDot = logFileName.lastIndexOf('.');
@@ -280,9 +278,6 @@ public class ExecuteLogUtils {
      * 由开始日期转换为开始时间，一般在以时间为条件的查询中使用
      */
     private static Date date2StartTime(Date date) {
-        if (date == null) {
-            return null;
-        }
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         String dateStr = sdf.format(date);
         Date startTime = null;
@@ -310,5 +305,20 @@ public class ExecuteLogUtils {
         Date date = new Date(timeMillis);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         return sdf.format(date);
+    }
+
+    private static long removeJSONArrayEndBracket() throws IOException {
+        File logFile = getCounterLogFile(logFileName);
+        RandomAccessFile f = new RandomAccessFile(logFile.getAbsolutePath(), "rw");
+        long length = f.length();
+        byte b = -1;
+        while (b != 93 && length > 0) {
+            length -= 1;
+            f.seek(length);
+            b = f.readByte();
+        }
+        f.setLength(length);
+        f.close();
+        return length;
     }
 }

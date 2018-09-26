@@ -1,7 +1,7 @@
 /*
  * @(#)OutputLogRunnable.java	2015-7-28 下午03:27:20
  * javaagent
- * Copyright 2015 Thuisoft, Inc. All rights reserved.
+ * Copyright 2015 wenshuo, Inc. All rights reserved.
  * wenshuo PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package com.wenshuo.agent.log;

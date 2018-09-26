@@ -20,7 +20,7 @@ import com.wenshuo.agent.ConfigUtils;
 import com.wenshuo.agent.PojoDetector;
 
 /**
- * AgentLogClassFileTransformer
+ * AgentLogClassFileTransformer 类增强，增加agent日志
  * 
  * @author dingjsh
  * @time 2015-7-24上午09:53:44
@@ -105,9 +105,8 @@ public class AgentLogClassFileTransformer implements ClassFileTransformer {
 
         // 避免变量名重复
         m.addLocalVariable("dingjsh_javaagent_elapsedTime", CtClass.longType);
-        m.insertBefore("dingjsh_javaagent_elapsedTime = "+timeMethodStr+";");
-        m.insertAfter(
-            "dingjsh_javaagent_elapsedTime = "+timeMethodStr+" - dingjsh_javaagent_elapsedTime;");
+        m.insertBefore("dingjsh_javaagent_elapsedTime = " + timeMethodStr + ";");
+        m.insertAfter("dingjsh_javaagent_elapsedTime = " + timeMethodStr + " - dingjsh_javaagent_elapsedTime;");
         m.insertAfter(LOG_UTILS + ".log(" + aopClassName + ",\"" + m.getName()
             + "\",java.lang.System.currentTimeMillis(),(long)dingjsh_javaagent_elapsedTime" + ");");
     }
