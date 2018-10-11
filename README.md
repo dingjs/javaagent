@@ -24,5 +24,10 @@ agent.exclude.class.regex.default=.*EnhancerByCGLIB.*;.*FastClassByCGLIB.*
 # 记录方法的耗时时是采用nanoTime,还是currentTimeMillis,nanoTime更准确，但是会耗时一些
 agent.log.nano=true
 ```
-   
-   
+
+## agent日志分析器使用
+agent日志分析器是我同事严丽使用SpringBoot+h2数据库开发的分析工具，除了基础功能，对于有sql能力的同学，你可以直接使用[console](http://47.96.150.36:8080/console)登录后，直接写sql进行统计，你可以按自己想要的维度来进行处理。
+- JDBC URL:   jdbc:h2:mem:~/h2test
+- USer Name : sa
+- Password : 空
+登录后，你就可以尽情的写sql了。
