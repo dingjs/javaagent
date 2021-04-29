@@ -26,7 +26,7 @@ agent.log.nano=true
 ```
 
 ## agent日志分析器使用
-agent日志分析器是我同事严丽使用SpringBoot+h2数据库开发的分析工具，除了基础功能，对于有sql能力的同学，你可以直接使用[console](http://47.96.150.36:8080/console)登录后，直接写sql进行统计，你可以按自己想要的维度来进行处理。
+agent日志分析器是我同事严丽使用SpringBoot+h2数据库开发的分析工具，除了基础功能，对于有sql能力的同学，你可以直接使用[agent日志分析工具](https://pan.baidu.com/s/1Ma4iEWRmBonGO1TapeEF-g)自带的[console](http://XXXX/console)登录后，直接写sql进行统计，你可以按自己想要的维度来进行处理。
 - JDBC URL:   jdbc:h2:mem:~/h2test
 - USer Name : sa
 - Password : 空
