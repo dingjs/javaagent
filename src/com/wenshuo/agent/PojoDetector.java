@@ -20,11 +20,7 @@ import com.wenshuo.agent.javassist.CtMethod;
  * @time 2016-5-7下午04:18:14
  */
 public class PojoDetector {
-    
-//    private static final String[] ignoreMthods = new String[]{"toString","equals","hashCode","toJSONString"};
-    
-    
-    
+
     public static Set<String> getPojoMethodNames(CtMethod[] methods){
         Set<String> pojoMethods = Collections.emptySet();
         if(null != methods && methods.length>0){

@@ -10,8 +10,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @time 2016-5-19上午09:40:50
  */
 public class NamedThreadFactory implements ThreadFactory {
-    private static final AtomicInteger POOL_SEQ = new AtomicInteger(1);
-
     private final AtomicInteger mThreadNum = new AtomicInteger(1);
 
     private final String mPrefix;
@@ -19,14 +17,6 @@ public class NamedThreadFactory implements ThreadFactory {
     private final boolean mDaemon;
 
     private final ThreadGroup mGroup;
-
-    public NamedThreadFactory() {
-        this("pool-" + POOL_SEQ.getAndIncrement(), false);
-    }
-
-    public NamedThreadFactory(String prefix) {
-        this(prefix, false);
-    }
 
     public NamedThreadFactory(String prefix, boolean daemon) {
         mPrefix = prefix + "-thread-";
@@ -41,9 +31,5 @@ public class NamedThreadFactory implements ThreadFactory {
         Thread ret = new Thread(mGroup, runnable, name, 0);
         ret.setDaemon(mDaemon);
         return ret;
-    }
-
-    public ThreadGroup getThreadGroup() {
-        return mGroup;
     }
 }

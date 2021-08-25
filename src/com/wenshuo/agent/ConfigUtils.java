@@ -11,7 +11,7 @@ import java.util.Set;
 /**
  * 获取配置信息<br>
  * ConfigUtils
- * 
+ *
  * @author dingjsh
  * @time 2015-7-27下午09:16:18
  */
@@ -29,14 +29,14 @@ public class ConfigUtils {
         super();
     }
 
-    public static void initProperties(String propertiesFileName) {
+    static void initProperties(String propertiesFileName) {
         props = getProperties(propertiesFileName);
         initExcluePackages();
         initIncludePackages();
         initExcludeClassRegexs();
     }
 
-    public static String getProperty(String key) {
+    private static String getProperty(String key) {
         if (null != props && AgentUtils.isNotBlank(key)) {
             return props.getProperty(key);
         }
@@ -76,10 +76,10 @@ public class ConfigUtils {
             String excludeDefault = getProperty(ConfigConsts.EXCLUDE_PACKAGE_DEFAULT);
             String excludes = getProperty(ConfigConsts.EXCLUDE_PACKAGE);
             excludePackages = new HashSet<String>();
-            if (null != excludeDefault && AgentUtils.isNotBlank(excludeDefault)) {
+            if (AgentUtils.isNotBlank(excludeDefault)) {
                 excludePackages.addAll(Arrays.asList(excludeDefault.split(";")));
             }
-            if (null != excludes && AgentUtils.isNotBlank(excludes)) {
+            if (AgentUtils.isNotBlank(excludes)) {
                 excludePackages.addAll(Arrays.asList(excludes.split(";")));
             }
         }
@@ -93,7 +93,7 @@ public class ConfigUtils {
         if (null == includePackages) {
             String includes = getProperty(ConfigConsts.INCLUDE_PACKAGE);
             includePackages = new HashSet<String>();
-            if (null != includes && AgentUtils.isNotBlank(includes)) {
+            if (AgentUtils.isNotBlank(includes)) {
                 includePackages.addAll(Arrays.asList(includes.split(";")));
             }
         }
@@ -119,11 +119,11 @@ public class ConfigUtils {
         if (null == excludeClassRegexs) {
             Set<String> excludeClassRegexsTemp = new HashSet<String>();
             String defaultRegex = getProperty(ConfigConsts.EXCLUDE_CLASS_REGEX_DEFAULT);
-            if (null != defaultRegex && AgentUtils.isNotBlank(defaultRegex)) {
+            if (AgentUtils.isNotBlank(defaultRegex)) {
                 excludeClassRegexsTemp.addAll(Arrays.asList(defaultRegex.split(";")));
             }
             String excludeRegexStr = getProperty(ConfigConsts.EXCLUDE_CLASS_REGEX);
-            if (null != excludeRegexStr && AgentUtils.isNotBlank(excludeRegexStr)) {
+            if (AgentUtils.isNotBlank(excludeRegexStr)) {
                 excludeClassRegexsTemp.addAll(Arrays.asList(excludeRegexStr.split(";")));
             }
             excludeClassRegexs = excludeClassRegexsTemp;
@@ -137,25 +137,26 @@ public class ConfigUtils {
 
     /**
      * 是否开启pojo的监控
-     * 
-     * @return
+     *
+     * @return 是否开启pojo的监控
      * @author dingjsh
      */
     public static boolean isOpenPojoMonitor() {
         String value = getProperty(ConfigConsts.POJO_MONITOR_OPEN);
         return "true".equalsIgnoreCase(value);
     }
-    
+
     /**
      * ConfigUtils
+     *
+     * @return 是否采用nanoTime来记录方法的执行时间
      * @description 是否采用nanoTime来记录方法的执行时间
-     * @return
      * @author dingjsh
      * @date 2018年5月25日 下午2:08:33
      * @version 1.2.0
      */
-    public static boolean isUsingNanoTime(){
-        String  value = getProperty(ConfigConsts.LOG_TIME_NANO);
+    public static boolean isUsingNanoTime() {
+        String value = getProperty(ConfigConsts.LOG_TIME_NANO);
         return "true".equalsIgnoreCase(value);
     }
 }

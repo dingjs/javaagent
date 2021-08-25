@@ -28,7 +28,7 @@ import com.wenshuo.agent.NamedThreadFactory;
 
 /**
  * ExecuteLogUtils
- * 
+ *
  * @author dingjsh
  * @time 2015-7-27下午05:57:01
  */
@@ -40,11 +40,11 @@ public class ExecuteLogUtils {
 
     private static String logFileName = null;
 
-    private static long startTimemillis;
+    private static long startTimeMillis;
 
     private static ScheduledThreadPoolExecutor counterLogExecutor;
 
-    private static Map<String, Map<String, AtomicLong[]>> exeuteCounterMap;
+    private static Map<String, Map<String, AtomicLong[]>> executeCounterMap;
 
     private static final Object executeCounterLock = new Object();
 
@@ -82,53 +82,53 @@ public class ExecuteLogUtils {
         }
         setNextDateStartTimeMillis();
         initWriter();
-        exeuteCounterMap = new ConcurrentHashMap<String, Map<String, AtomicLong[]>>();
-        startTimemillis = System.currentTimeMillis();
+        executeCounterMap = new ConcurrentHashMap<String, Map<String, AtomicLong[]>>();
+        startTimeMillis = System.currentTimeMillis();
         counterLogExecutor = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("pool-thread-agent-log", true));
         counterLogExecutor.scheduleWithFixedDelay(new OutputLogRunnable(), interval, interval, TimeUnit.SECONDS);
         inited = true;
     }
 
-    public static void log(String className, String methodName, long currentTimemillis, long executeTime) {
+    public static void log(String className, String methodName, long executeTime) {
         logExecuteCounter(className, methodName, executeTime);
     }
 
     /**
      * 输出方法执行记数日志
-     * 
+     *
      * @author dingjsh
      * @time 2015-7-28下午01:35:25
      */
-    public synchronized static void outputCounterLog() throws IOException {
-        Map<String, Map<String, AtomicLong[]>> exeuteCounterMapInner = exeuteCounterMap;
-        exeuteCounterMap = new ConcurrentHashMap<String, Map<String, AtomicLong[]>>();
-        String startTime = foramteTimeMillis(startTimemillis);
-        String endTime = foramteTimeMillis(System.currentTimeMillis());
+     synchronized static void outputCounterLog() throws IOException {
+        Map<String, Map<String, AtomicLong[]>> executeCounterMapInner = executeCounterMap;
+        executeCounterMap = new ConcurrentHashMap<String, Map<String, AtomicLong[]>>();
+        String startTime = formatTimeMillis(startTimeMillis);
+        String endTime = formatTimeMillis(System.currentTimeMillis());
         long byteLength = removeJSONArrayEndBracket();
         if (0 == byteLength) {
-            writeLog("[",true, startTimemillis);
+            writeLog("[",true, startTimeMillis);
         }
 
-        Set<Map.Entry<String, Map<String, AtomicLong[]>>> entrySet = exeuteCounterMapInner.entrySet();
+        Set<Map.Entry<String, Map<String, AtomicLong[]>>> entrySet = executeCounterMapInner.entrySet();
         Iterator<Map.Entry<String, Map<String, AtomicLong[]>>> ite = entrySet.iterator();
         int length = entrySet.size();
         if (length > 0 && byteLength > 10) { // 说明文件不只是[],json数组中已经有内容
-            writeLog(",", startTimemillis);
+            writeLog(",", startTimeMillis);
         }
         for (int index = 0; ite.hasNext(); index++) {
             Map.Entry<String, Map<String, AtomicLong[]>> entry = ite.next();
             String className = entry.getKey();
             Map<String, AtomicLong[]> method2ExecuteMap = entry.getValue();
             String methodExecuteJson = MethodExecuteJSONformatter.getMethodExecuteJSON(className, method2ExecuteMap,
-                startTime, endTime, isUsingNanoTime, logAvgExecuteTime);
-            writeLog(methodExecuteJson, startTimemillis);
+                    startTime, endTime, isUsingNanoTime, logAvgExecuteTime);
+            writeLog(methodExecuteJson, startTimeMillis);
             if (index < length - 1) {
-                writeLog(",", true, startTimemillis);
+                writeLog(",", true, startTimeMillis);
             }
         }
-        writeLog("]", true,startTimemillis);
+        writeLog("]", true, startTimeMillis);
         flushLogAndClose();
-        startTimemillis = System.currentTimeMillis();
+        startTimeMillis = System.currentTimeMillis();
     }
 
     private static void logExecuteCounter(String className, String methodName, long executeTime) {
@@ -151,9 +151,9 @@ public class ExecuteLogUtils {
     }
 
     /**
-     * 
+     *
      * ExecuteLogUtils
-     * 
+     *
      * @description 获得class和它的调用次数映射关系，如果exeuteCounterMap中没有，则创建一个并放入
      * @param className 类名
      * @return class和它的调用次数映射关系
@@ -162,13 +162,13 @@ public class ExecuteLogUtils {
      * @version 1.2.0
      */
     private static Map<String, AtomicLong[]> getOrCreateClassExecutesMapping(String className) {
-        Map<String, AtomicLong[]> methodCounterMap = exeuteCounterMap.get(className);
+        Map<String, AtomicLong[]> methodCounterMap = executeCounterMap.get(className);
         if (null == methodCounterMap) {
             synchronized (executeCounterLock) {
-                methodCounterMap = exeuteCounterMap.get(className);
+                methodCounterMap = executeCounterMap.get(className);
                 if (null == methodCounterMap) {
                     methodCounterMap = new ConcurrentHashMap<String, AtomicLong[]>();
-                    exeuteCounterMap.put(className, methodCounterMap);
+                    executeCounterMap.put(className, methodCounterMap);
                 }
             }
         }
@@ -230,7 +230,7 @@ public class ExecuteLogUtils {
         try {
             File logFile = getCounterLogFile(logFileName);
             counterLogWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(logFile, true), ENCODING),
-                BUFFER_SIZE);
+                    BUFFER_SIZE);
         } catch (IOException e) {
             System.err.println(e);
             throw new RuntimeException("无法初始化【" + logFileName + "】,建议您检查磁盘空间，或者手动删除该日志文件");
@@ -243,7 +243,7 @@ public class ExecuteLogUtils {
         int lastIndexOfDot = logFileName.lastIndexOf('.');
         if (lastIndexOfDot > 0) {
             logFileName = logFileName.substring(0, lastIndexOfDot) + "." + logFileNameWithDate
-                + logFileName.substring(lastIndexOfDot);
+                    + logFileName.substring(lastIndexOfDot);
         } else {
             logFileName = logFileName + "." + logFileNameWithDate + ".log";
         }
@@ -301,7 +301,7 @@ public class ExecuteLogUtils {
         nextDayStartTimeMillis = startTime.getTime();
     }
 
-    private static String foramteTimeMillis(long timeMillis) {
+    private static String formatTimeMillis(long timeMillis) {
         Date date = new Date(timeMillis);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         return sdf.format(date);

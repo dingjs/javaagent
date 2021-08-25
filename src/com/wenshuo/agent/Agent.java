@@ -5,22 +5,18 @@
  * wenshuo PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 package com.wenshuo.agent;
-
-import java.io.IOException;
 import java.lang.instrument.Instrumentation;
-
 import com.wenshuo.agent.log.ExecuteLogUtils;
 import com.wenshuo.agent.transformer.AgentLogClassFileTransformer;
 
 /**
  * Agent
- * 
+ *
  * @author dingjsh
  */
 public class Agent {
 
-    public static void premain(String agentArs, Instrumentation inst)
-            throws IOException {
+    public static void premain(String agentArs, Instrumentation inst) {
         // 初始化配置
         ConfigUtils.initProperties(agentArs);
         ExecuteLogUtils.init();

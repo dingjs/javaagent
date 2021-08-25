@@ -15,7 +15,7 @@ import java.io.Writer;
 
 /**
  * AgentUtils
- * 
+ *
  * @author dingjsh
  * @time 2015-7-27下午05:26:24
  */
@@ -25,7 +25,7 @@ public class AgentUtils {
      * <p>
      * Checks if a String is whitespace, empty ("") or null.
      * </p>
-     * 
+     *
      * <pre>
      * StringUtils.isBlank(null)      = true
      * StringUtils.isBlank("")        = true
@@ -33,9 +33,8 @@ public class AgentUtils {
      * StringUtils.isBlank("bob")     = false
      * StringUtils.isBlank("  bob  ") = false
      * </pre>
-     * 
-     * @param str
-     *            the String to check, may be null
+     *
+     * @param str the String to check, may be null
      * @return <code>true</code> if the String is null, empty or whitespace
      * @since 2.0
      */
@@ -45,7 +44,7 @@ public class AgentUtils {
             return true;
         }
         for (int i = 0; i < strLen; i++) {
-            if ((Character.isWhitespace(str.charAt(i)) == false)) {
+            if (!Character.isWhitespace(str.charAt(i))) {
                 return false;
             }
         }
@@ -56,7 +55,7 @@ public class AgentUtils {
      * <p>
      * Checks if a String is not empty (""), not null and not whitespace only.
      * </p>
-     * 
+     *
      * <pre>
      * StringUtils.isNotBlank(null)      = false
      * StringUtils.isNotBlank("")        = false
@@ -64,14 +63,13 @@ public class AgentUtils {
      * StringUtils.isNotBlank("bob")     = true
      * StringUtils.isNotBlank("  bob  ") = true
      * </pre>
-     * 
-     * @param str
-     *            the String to check, may be null
+     *
+     * @param str the String to check, may be null
      * @return <code>true</code> if the String is not empty and not null and not
-     *         whitespace
+     * whitespace
      * @since 2.0
      */
-    public static boolean isNotBlank(String str) {
+    static boolean isNotBlank(String str) {
         return !isBlank(str);
     }
 
@@ -80,11 +78,10 @@ public class AgentUtils {
      * <p>
      * Equivalent to {@link InputStream#close()}, except any exceptions will be
      * ignored. This is typically used in finally blocks.
-     * 
-     * @param input
-     *            the InputStream to close, may be null or already closed
+     *
+     * @param input the InputStream to close, may be null or already closed
      */
-    public static void closeQuietly(InputStream input) {
+    static void closeQuietly(InputStream input) {
         try {
             if (input != null) {
                 input.close();
@@ -103,44 +100,45 @@ public class AgentUtils {
         return (int) count;
     }
 
-    public static long copyLarge(InputStream input, OutputStream output)
+    private static long copyLarge(InputStream input, OutputStream output)
             throws IOException {
         byte[] buffer = new byte[4096];
         long count = 0;
-        int n = 0;
+        int n;
         while (-1 != (n = input.read(buffer))) {
             output.write(buffer, 0, n);
             count += n;
         }
         return count;
     }
-    
+
     // read toByteArray
     //-----------------------------------------------------------------------
+
     /**
      * Get the contents of an <code>InputStream</code> as a <code>byte[]</code>.
      * <p>
      * This method buffers the input internally, so there is no need to use a
      * <code>BufferedInputStream</code>.
-     * 
-     * @param input  the <code>InputStream</code> to read from
+     *
+     * @param input the <code>InputStream</code> to read from
      * @return the requested byte array
      * @throws NullPointerException if the input is null
-     * @throws IOException if an I/O error occurs
+     * @throws IOException          if an I/O error occurs
      */
     public static byte[] toByteArray(InputStream input) throws IOException {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         copy(input, output);
         return output.toByteArray();
     }
-    
+
     /**
      * Unconditionally close a <code>Writer</code>.
      * <p>
      * Equivalent to {@link Writer#close()}, except any exceptions will be ignored.
      * This is typically used in finally blocks.
      *
-     * @param output  the Writer to close, may be null or already closed
+     * @param output the Writer to close, may be null or already closed
      */
     public static void closeQuietly(Writer output) {
         try {
@@ -151,30 +149,30 @@ public class AgentUtils {
             // ignore
         }
     }
-    
+
     /**
      * Makes a directory, including any necessary but nonexistent parent
      * directories. If there already exists a file with specified name or
      * the directory cannot be created then an exception is thrown.
      *
-     * @param directory  directory to create, must not be <code>null</code>
+     * @param directory directory to create, must not be <code>null</code>
      * @throws NullPointerException if the directory is <code>null</code>
-     * @throws IOException if the directory cannot be created
+     * @throws IOException          if the directory cannot be created
      */
     public static void forceMkdir(File directory) throws IOException {
         if (directory.exists()) {
             if (directory.isFile()) {
                 String message =
-                    "File "
-                        + directory
-                        + " exists and is "
-                        + "not a directory. Unable to create directory.";
+                        "File "
+                                + directory
+                                + " exists and is "
+                                + "not a directory. Unable to create directory.";
                 throw new IOException(message);
             }
         } else {
             if (!directory.mkdirs()) {
                 String message =
-                    "Unable to create directory " + directory;
+                        "Unable to create directory " + directory;
                 throw new IOException(message);
             }
         }

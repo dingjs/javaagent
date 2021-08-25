@@ -40,7 +40,7 @@ public class AgentLogClassFileTransformer implements ClassFileTransformer {
      * byte[])
      */
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
-        ProtectionDomain protectionDomain, byte[] classfileBuffer) throws IllegalClassFormatException {
+        ProtectionDomain protectionDomain, byte[] classfileBuffer) {
         byte[] byteCode = classfileBuffer;
         className = className.replace('/', '.');
         if (!isNeedLogExecuteInfo(className)) {
@@ -56,7 +56,7 @@ public class AgentLogClassFileTransformer implements ClassFileTransformer {
     private byte[] aopLog(ClassLoader loader, String className, byte[] byteCode) {
         try {
             ClassPool cp = ClassPool.getDefault();
-            CtClass cc = null;
+            CtClass cc;
             try {
                 cc = cp.get(className);
             } catch (NotFoundException e) {
@@ -108,14 +108,14 @@ public class AgentLogClassFileTransformer implements ClassFileTransformer {
         m.insertBefore("dingjsh_javaagent_elapsedTime = " + timeMethodStr + ";");
         m.insertAfter("dingjsh_javaagent_elapsedTime = " + timeMethodStr + " - dingjsh_javaagent_elapsedTime;");
         m.insertAfter(LOG_UTILS + ".log(" + aopClassName + ",\"" + m.getName()
-            + "\",java.lang.System.currentTimeMillis(),(long)dingjsh_javaagent_elapsedTime" + ");");
+            + "\",(long)dingjsh_javaagent_elapsedTime" + ");");
     }
 
     /**
      * 是否需要记录执行信息
      * 
-     * @param className
-     * @return
+     * @param className 类名
+     * @return 是否需要记录执行信息
      * @author dingjsh
      * @time 2015-7-27下午06:11:02
      */
