@@ -56,7 +56,7 @@ public class ExecuteLogUtils {
 
     private static boolean logAvgExecuteTime = false;
 
-    private static boolean inited = false;
+    private static volatile boolean isInitialized = false;
 
     private ExecuteLogUtils() {
         super();
@@ -69,7 +69,7 @@ public class ExecuteLogUtils {
      * @time 2015-7-30上午10:47:58
      */
     public static synchronized void init() {
-        if (inited) {
+        if (isInitialized) {
             return;
         }
         logFileName = ConfigUtils.getLogFileName();
@@ -86,7 +86,7 @@ public class ExecuteLogUtils {
         startTimeMillis = System.currentTimeMillis();
         counterLogExecutor = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("pool-thread-agent-log", true));
         counterLogExecutor.scheduleWithFixedDelay(new OutputLogRunnable(), interval, interval, TimeUnit.SECONDS);
-        inited = true;
+        isInitialized = true;
     }
 
     public static void log(String className, String methodName, long executeTime) {
