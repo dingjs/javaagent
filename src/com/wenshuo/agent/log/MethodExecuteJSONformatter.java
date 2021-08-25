@@ -1,7 +1,7 @@
 package com.wenshuo.agent.log;
 
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
+
 
 /**
  * MethodExecuteJSONformatter
@@ -17,7 +17,7 @@ class MethodExecuteJSONformatter {
      * MethodExecuteJSONformatter
      *
      * @param className         类名
-     * @param method2ExecuteMap Map<方法名, AtomicLong[]> 数组第一个是执行次数，第二个是执行时间
+     * @param method2ExecuteMap Map<方法名, Long[]> 数组第一个是执行次数，第二个是执行时间
      * @param startTime         统计周期的开始时间，格式为 yyyy-MM-dd HH:mm:ss
      * @param endTime           统计周期的结束时间，格式为 yyyy-MM-dd HH:mm:ss
      * @return 格式化后的json string
@@ -26,19 +26,19 @@ class MethodExecuteJSONformatter {
      * @date 2018年8月22日 下午8:49:18
      * @version 2.0.0
      */
-    static String getMethodExecuteJSON(String className, Map<String, AtomicLong[]> method2ExecuteMap,
+    static String getMethodExecuteJSON(String className, Map<String, long[]> method2ExecuteMap,
                                        String startTime, String endTime, boolean isUsingNanoTime, boolean logAvgExecuteTime) {
         StringBuilder json = new StringBuilder("{");
         appendString(json, "class", className).append(",");
         appendString(json, "start", startTime).append(",");
         appendString(json, "end", endTime).append(",");
         appendKey(json, "methods").append("[");
-        for (Map.Entry<String, AtomicLong[]> methodEntry : method2ExecuteMap.entrySet()) {
+        for (Map.Entry<String, long[]> methodEntry : method2ExecuteMap.entrySet()) {
             String methodName = methodEntry.getKey();
-            AtomicLong[] executeCounter = methodEntry.getValue();
-            long counter = executeCounter[0].longValue();
+            long[] executeCounter = methodEntry.getValue();
+            long counter = executeCounter[0];
             long timeInMillis
-                    = isUsingNanoTime ? executeCounter[1].longValue() / 1000000 : executeCounter[1].longValue();
+                    = isUsingNanoTime ? executeCounter[1] / 1000000 : executeCounter[1];
             json.append("{");
             appendString(json, "name", methodName).append(",");
             appendLong(json, "counter", counter).append(",");

@@ -20,7 +20,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 import com.wenshuo.agent.AgentUtils;
 import com.wenshuo.agent.ConfigUtils;
@@ -44,7 +43,7 @@ public class ExecuteLogUtils {
 
     private static ScheduledThreadPoolExecutor counterLogExecutor;
 
-    private static Map<String, Map<String, AtomicLong[]>> executeCounterMap;
+    private static ConcurrentHashMap<String, ConcurrentHashMap<String, long[]>> executeCounterMap;
 
     private static final Object executeCounterLock = new Object();
 
@@ -82,7 +81,7 @@ public class ExecuteLogUtils {
         }
         setNextDateStartTimeMillis();
         initWriter();
-        executeCounterMap = new ConcurrentHashMap<String, Map<String, AtomicLong[]>>();
+        executeCounterMap = new ConcurrentHashMap<String, ConcurrentHashMap<String, long[]>>();
         startTimeMillis = System.currentTimeMillis();
         counterLogExecutor = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("pool-thread-agent-log", true));
         counterLogExecutor.scheduleWithFixedDelay(new OutputLogRunnable(), interval, interval, TimeUnit.SECONDS);
@@ -99,26 +98,26 @@ public class ExecuteLogUtils {
      * @author dingjsh
      * @time 2015-7-28下午01:35:25
      */
-     synchronized static void outputCounterLog() throws IOException {
-        Map<String, Map<String, AtomicLong[]>> executeCounterMapInner = executeCounterMap;
-        executeCounterMap = new ConcurrentHashMap<String, Map<String, AtomicLong[]>>();
+    synchronized static void outputCounterLog() throws IOException {
+        ConcurrentHashMap<String, ConcurrentHashMap<String, long[]>> executeCounterMapInner = executeCounterMap;
+        executeCounterMap = new ConcurrentHashMap<String, ConcurrentHashMap<String, long[]>>();
         String startTime = formatTimeMillis(startTimeMillis);
         String endTime = formatTimeMillis(System.currentTimeMillis());
         long byteLength = removeJSONArrayEndBracket();
         if (0 == byteLength) {
-            writeLog("[",true, startTimeMillis);
+            writeLog("[", true, startTimeMillis);
         }
 
-        Set<Map.Entry<String, Map<String, AtomicLong[]>>> entrySet = executeCounterMapInner.entrySet();
-        Iterator<Map.Entry<String, Map<String, AtomicLong[]>>> ite = entrySet.iterator();
+        Set<Map.Entry<String, ConcurrentHashMap<String, long[]>>> entrySet = executeCounterMapInner.entrySet();
+        Iterator<Map.Entry<String, ConcurrentHashMap<String, long[]>>> ite = entrySet.iterator();
         int length = entrySet.size();
         if (length > 0 && byteLength > 10) { // 说明文件不只是[],json数组中已经有内容
             writeLog(",", startTimeMillis);
         }
         for (int index = 0; ite.hasNext(); index++) {
-            Map.Entry<String, Map<String, AtomicLong[]>> entry = ite.next();
+            Map.Entry<String, ConcurrentHashMap<String, long[]>> entry = ite.next();
             String className = entry.getKey();
-            Map<String, AtomicLong[]> method2ExecuteMap = entry.getValue();
+            Map<String, long[]> method2ExecuteMap = entry.getValue();
             String methodExecuteJson = MethodExecuteJSONformatter.getMethodExecuteJSON(className, method2ExecuteMap,
                     startTime, endTime, isUsingNanoTime, logAvgExecuteTime);
             writeLog(methodExecuteJson, startTimeMillis);
@@ -132,42 +131,35 @@ public class ExecuteLogUtils {
     }
 
     private static void logExecuteCounter(String className, String methodName, long executeTime) {
-        Map<String, AtomicLong[]> methodCounterMap = getOrCreateClassExecutesMapping(className);
-        AtomicLong[] counter = methodCounterMap.get(methodName);
+        // dingjs modfied in 20210825 原来是用锁和Atomiclong来避免线程安全问题，现在去掉这些实现。原因是此处线程安全问题顶多导致
+        // 数据有一些误差，这个误差对于agent数据监控并没有什么影响，牺牲一定的准确性带来性能的提升是有必要的
+        ConcurrentHashMap<String, long[]> methodCounterMap = getOrCreateClassExecutesMapping(className);
+        long[] counter = methodCounterMap.get(methodName);
         if (null == counter) {
-            synchronized (methodCounterMap) {
-                counter = methodCounterMap.get(methodName);
-                if (null == counter) {
-                    methodCounterMap.put(methodName, new AtomicLong[] {new AtomicLong(1), new AtomicLong(executeTime)});
-                } else {
-                    counter[0].incrementAndGet();
-                    counter[1].addAndGet(executeTime);
-                }
-            }
+            methodCounterMap.put(methodName, new long[]{1, executeTime});
         } else {
-            counter[0].incrementAndGet();
-            counter[1].addAndGet(executeTime);
+            counter[0]++;
+            counter[1] = executeTime + counter[1];
         }
     }
 
     /**
-     *
      * ExecuteLogUtils
      *
-     * @description 获得class和它的调用次数映射关系，如果exeuteCounterMap中没有，则创建一个并放入
      * @param className 类名
      * @return class和它的调用次数映射关系
+     * @description 获得class和它的调用次数映射关系，如果exeuteCounterMap中没有，则创建一个并放入
      * @author dingjsh
      * @date 2018年5月25日 下午4:40:33
      * @version 1.2.0
      */
-    private static Map<String, AtomicLong[]> getOrCreateClassExecutesMapping(String className) {
-        Map<String, AtomicLong[]> methodCounterMap = executeCounterMap.get(className);
+    private static ConcurrentHashMap<String, long[]> getOrCreateClassExecutesMapping(String className) {
+        ConcurrentHashMap<String, long[]> methodCounterMap = executeCounterMap.get(className);
         if (null == methodCounterMap) {
             synchronized (executeCounterLock) {
                 methodCounterMap = executeCounterMap.get(className);
                 if (null == methodCounterMap) {
-                    methodCounterMap = new ConcurrentHashMap<String, AtomicLong[]>();
+                    methodCounterMap = new ConcurrentHashMap<String, long[]>();
                     executeCounterMap.put(className, methodCounterMap);
                 }
             }
