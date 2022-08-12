@@ -131,7 +131,7 @@ public class ExecuteLogUtils {
     }
 
     private static void logExecuteCounter(String className, String methodName, long executeTime) {
-        // dingjs modfied in 20210825 原来是用锁和Atomiclong来避免线程安全问题，现在去掉这些实现。原因是此处线程安全问题顶多导致
+        // dingjs modified in 20210825 原来是用锁和AtomicLong来避免线程安全问题，现在去掉这些实现。原因是此处线程安全问题顶多导致
         // 数据有一些误差，这个误差对于agent数据监控并没有什么影响，牺牲一定的准确性带来性能的提升是有必要的
         ConcurrentHashMap<String, long[]> methodCounterMap = getOrCreateClassExecutesMapping(className);
         long[] counter = methodCounterMap.get(methodName);

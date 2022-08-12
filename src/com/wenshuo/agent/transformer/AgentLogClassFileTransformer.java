@@ -1,13 +1,7 @@
 package com.wenshuo.agent.transformer;
 
-import java.io.IOException;
-import java.lang.instrument.ClassFileTransformer;
-import java.lang.instrument.IllegalClassFormatException;
-import java.security.ProtectionDomain;
-import java.util.Collections;
-import java.util.Set;
-import java.util.regex.Pattern;
-
+import com.wenshuo.agent.ConfigUtils;
+import com.wenshuo.agent.PojoDetector;
 import com.wenshuo.agent.javassist.CannotCompileException;
 import com.wenshuo.agent.javassist.ClassPool;
 import com.wenshuo.agent.javassist.CtClass;
@@ -15,9 +9,12 @@ import com.wenshuo.agent.javassist.CtMethod;
 import com.wenshuo.agent.javassist.LoaderClassPath;
 import com.wenshuo.agent.javassist.Modifier;
 import com.wenshuo.agent.javassist.NotFoundException;
-
-import com.wenshuo.agent.ConfigUtils;
-import com.wenshuo.agent.PojoDetector;
+import java.io.IOException;
+import java.lang.instrument.ClassFileTransformer;
+import java.security.ProtectionDomain;
+import java.util.Collections;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * AgentLogClassFileTransformer 类增强，增加agent日志
@@ -31,14 +28,8 @@ public class AgentLogClassFileTransformer implements ClassFileTransformer {
 
     private static final String AGENT_PACKAGE_NAME = "com.wenshuo.agent";
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * java.lang.instrument.ClassFileTransformer#transform(java.lang.ClassLoader
-     * , java.lang.String, java.lang.Class, java.security.ProtectionDomain,
-     * byte[])
-     */
+
+    @Override
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
         ProtectionDomain protectionDomain, byte[] classfileBuffer) {
         byte[] byteCode = classfileBuffer;
