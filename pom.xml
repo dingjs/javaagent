@@ -4,12 +4,17 @@
 
 	<groupId>com.wenshuo</groupId>
 	<artifactId>javaagent</artifactId>
-	<version>2.1.1</version>
+	<version>2.1.2</version>
 	<packaging>jar</packaging>
+
+	<name>javaagent</name>
+	<description>基于javaagent技术来记录方法执行次数和时间</description>
+	<url>https://github.com/dingjs/javaagent</url>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.build.target>1.6</project.build.target>
+		<maven.compiler.encoding>UTF-8</maven.compiler.encoding>
 	</properties>
 	<developers>
 		<developer>
@@ -27,202 +32,29 @@
 	</licenses>
 
 	<build>
-		<sourceDirectory>src</sourceDirectory>
-		<outputDirectory>target/classes</outputDirectory>
-		<resources>
-			<resource>
-				<directory>src</directory>
-				<excludes>
-					<exclude>**/*.java</exclude>
-				</excludes>
-
-			</resource>
-		</resources>
-		<testSourceDirectory>test</testSourceDirectory>
-		<testResources>
-			<testResource>
-				<directory>test</directory>
-				<excludes>
-					<exclude>**/*.java</exclude>
-				</excludes>
-			</testResource>
-		</testResources>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
-				<executions>
-					<execution>
-						<phase>process-classes</phase>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-						<configuration>
-							<archive>
-								<manifestEntries>
-									<premain-class>com.wenshuo.agent.Agent</premain-class>
-								</manifestEntries>
-							</archive>
-						</configuration>
-					</execution>
-				</executions>
+				<version>3.3.0</version>
+				<configuration>
+					<archive>
+						<manifestEntries>
+							<premain-class>com.wenshuo.agent.Agent</premain-class>
+						</manifestEntries>
+					</archive>
+				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>buildnumber-maven-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-source-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>attach-sources</id>
-						<goals>
-							<goal>jar</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>sonar-maven-plugin</artifactId>
+				<configuration>
+					<source>6</source>
+					<target>6</target>
+				</configuration>
 			</plugin>
 		</plugins>
-		<pluginManagement>
-			<plugins>
-				<plugin>
-					<groupId>org.codehaus.mojo</groupId>
-					<artifactId>sonar-maven-plugin</artifactId>
-					<version>2.0</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-compiler-plugin</artifactId>
-					<version>2.3.2</version>
-					<configuration>
-						<source>${project.build.target}</source>
-						<target>${project.build.target}</target>
-						<encoding>${project.build.sourceEncoding}</encoding>
-					</configuration>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-dependency-plugin</artifactId>
-					<version>2.1</version>
-					<configuration>
-						<actTransitively>false</actTransitively>
-						<includeScope>runtime</includeScope>
-						<overWriteIfNewer>true</overWriteIfNewer>
-						<reResolve>false</reResolve>
-						<transitive>false</transitive>
-					</configuration>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-deploy-plugin</artifactId>
-					<version>2.4</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-source-plugin</artifactId>
-					<version>2.0.4</version>
-					<configuration>
-						<attach>true</attach>
-					</configuration>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-jar-plugin</artifactId>
-					<version>2.2</version>
-					<executions>
-						<execution>
-							<id>default-jar</id>
-							<configuration>
-							</configuration>
-						</execution>
-					</executions>
-					<configuration>
-						<archive>
-							<manifest>
-								<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-							</manifest>
-							<manifestEntries>
-								<Implementation-Build>${buildNumber}</Implementation-Build>
-								<Target-Jdk>${project.build.target}</Target-Jdk>
-							</manifestEntries>
-						</archive>
-					</configuration>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-assembly-plugin</artifactId>
-					<version>2.3</version>
-					<configuration>
-						<archive>
-							<manifestEntries>
-								<Platform-Module-Version>${project.version}</Platform-Module-Version>
-								<Platform-Module>${project.artifactId}</Platform-Module>
-							</manifestEntries>
-							<addMavenDescriptor>true</addMavenDescriptor>
-						</archive>
-					</configuration>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-surefire-plugin</artifactId>
-					<version>2.4.3</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-help-plugin</artifactId>
-					<version>2.0</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-install-plugin</artifactId>
-					<version>2.2</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-clean-plugin</artifactId>
-					<version>2.3</version>
-				</plugin>
-				<plugin>
-					<groupId>org.codehaus.mojo</groupId>
-					<artifactId>buildnumber-maven-plugin</artifactId>
-					<version>1.0-beta-2</version>
-					<executions>
-						<execution>
-							<phase>validate</phase>
-							<goals>
-								<goal>create</goal>
-							</goals>
-						</execution>
-					</executions>
-					<configuration>
-						<format>{0,date,yyyy-MM-dd HH:mm:ss}</format>
-						<items>
-							<item>timestamp</item>
-						</items>
-					</configuration>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-shade-plugin</artifactId>
-					<version>1.4</version>
-				</plugin>
-			</plugins>
-		</pluginManagement>
 	</build>
-
 
 	<dependencies>
 		<dependency>
@@ -236,7 +68,7 @@
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.12</version>
+			<version>4.13.2</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
