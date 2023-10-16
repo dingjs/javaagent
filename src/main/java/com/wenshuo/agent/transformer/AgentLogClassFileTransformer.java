@@ -1,14 +1,5 @@
 package com.wenshuo.agent.transformer;
 
-import com.wenshuo.agent.ConfigUtils;
-import com.wenshuo.agent.PojoDetector;
-import com.wenshuo.agent.javassist.CannotCompileException;
-import com.wenshuo.agent.javassist.ClassPool;
-import com.wenshuo.agent.javassist.CtClass;
-import com.wenshuo.agent.javassist.CtMethod;
-import com.wenshuo.agent.javassist.LoaderClassPath;
-import com.wenshuo.agent.javassist.Modifier;
-import com.wenshuo.agent.javassist.NotFoundException;
 import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.security.ProtectionDomain;
@@ -16,9 +7,21 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import com.wenshuo.agent.ConfigUtils;
+import com.wenshuo.agent.PojoDetector;
+import com.wenshuo.agent.applog.AppLogFactory;
+import com.wenshuo.agent.applog.IAppLog;
+import com.wenshuo.agent.javassist.CannotCompileException;
+import com.wenshuo.agent.javassist.ClassPool;
+import com.wenshuo.agent.javassist.CtClass;
+import com.wenshuo.agent.javassist.CtMethod;
+import com.wenshuo.agent.javassist.LoaderClassPath;
+import com.wenshuo.agent.javassist.Modifier;
+import com.wenshuo.agent.javassist.NotFoundException;
+
 /**
  * AgentLogClassFileTransformer 类增强，增加agent日志
- * 
+ *
  * @author dingjsh
  * @time 2015-7-24上午09:53:44
  */
@@ -28,9 +31,10 @@ public class AgentLogClassFileTransformer implements ClassFileTransformer {
 
     private static final String AGENT_PACKAGE_NAME = "com.wenshuo.agent";
 
+    private static IAppLog log = AppLogFactory.getAppLog(AgentLogClassFileTransformer.class);
 
     public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined,
-        ProtectionDomain protectionDomain, byte[] classfileBuffer) {
+            ProtectionDomain protectionDomain, byte[] classfileBuffer) {
         byte[] byteCode = classfileBuffer;
         className = className.replace('/', '.');
         if (!isNeedLogExecuteInfo(className)) {
@@ -55,7 +59,7 @@ public class AgentLogClassFileTransformer implements ClassFileTransformer {
             }
             byteCode = aopLog(cc, className, byteCode);
         } catch (Exception ex) {
-            System.err.println(ex);
+            log.error(ex.getMessage(), ex);
         }
         return byteCode;
     }
@@ -91,19 +95,20 @@ public class AgentLogClassFileTransformer implements ClassFileTransformer {
         boolean isMethodStatic = Modifier.isStatic(m.getModifiers());
         String aopClassName = isMethodStatic ? "\"" + className + "\"" : "this.getClass().getName()";
         final String timeMethodStr
-            = ConfigUtils.isUsingNanoTime() ? "java.lang.System.nanoTime()" : "java.lang.System.currentTimeMillis()";
+                = ConfigUtils.isUsingNanoTime() ? "java.lang.System.nanoTime()" : "java.lang.System.currentTimeMillis"
+                + "()";
 
         // 避免变量名重复
         m.addLocalVariable("dingjsh_javaagent_elapsedTime", CtClass.longType);
         m.insertBefore("dingjsh_javaagent_elapsedTime = " + timeMethodStr + ";");
         m.insertAfter("dingjsh_javaagent_elapsedTime = " + timeMethodStr + " - dingjsh_javaagent_elapsedTime;");
         m.insertAfter(LOG_UTILS + ".log(" + aopClassName + ",\"" + m.getName()
-            + "\",(long)dingjsh_javaagent_elapsedTime" + ");");
+                + "\",(long)dingjsh_javaagent_elapsedTime" + ");");
     }
 
     /**
      * 是否需要记录执行信息
-     * 
+     *
      * @param className 类名
      * @return 是否需要记录执行信息
      * @author dingjsh
@@ -152,4 +157,5 @@ public class AgentLogClassFileTransformer implements ClassFileTransformer {
         }
         return isNeeded;
     }
+
 }

@@ -4,27 +4,28 @@
  * Copyright 2015 wenshuo, Inc. All rights reserved.
  * wenshuo PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+
 package com.wenshuo.agent.log;
+
+import com.wenshuo.agent.applog.AppLogFactory;
+import com.wenshuo.agent.applog.IAppLog;
 
 /**
  * OutputLogRunnable
- * 
+ *
  * @author dingjsh
  * @time 2015-7-28下午03:27:20
  */
 public class OutputLogRunnable implements Runnable {
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Runnable#run()
-     */
+    private static IAppLog log = AppLogFactory.getAppLog(OutputLogRunnable.class);
+
     @Override
     public void run() {
-        try{
+        try {
             ExecuteLogUtils.outputCounterLog();
-        }catch(Exception e){
-            System.err.println(e);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
         }
     }
 

@@ -7,6 +7,9 @@ import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
+import com.wenshuo.agent.applog.AppLogFactory;
+import com.wenshuo.agent.applog.IAppLog;
+
 /**
  * 获取配置信息<br>
  * ConfigUtils
@@ -23,6 +26,8 @@ public class ConfigUtils {
     private static Set<String> includePackages;
 
     private static Set<String> excludeClassRegexs;
+
+    private static IAppLog log = AppLogFactory.getAppLog(ConfigUtils.class);
 
     private ConfigUtils() {
         super();
@@ -49,7 +54,7 @@ public class ConfigUtils {
             input = ConfigUtils.class.getClassLoader().getResourceAsStream("agent.properties");
             properties.load(input);
         } catch (Exception e) {
-            System.err.println("未找到默认配置");
+            log.warn("未找到默认配置");
         } finally {
             AgentUtils.closeQuietly(input);
         }
@@ -58,7 +63,7 @@ public class ConfigUtils {
                 input = new FileInputStream(propertiesFileName);
                 properties.load(input);
             } catch (Exception e) {
-                System.err.println(e);
+                log.error("解析配置文件出错：" + propertiesFileName, e);
             } finally {
                 AgentUtils.closeQuietly(input);
             }
@@ -158,4 +163,5 @@ public class ConfigUtils {
         String value = getProperty(ConfigConsts.LOG_TIME_NANO);
         return "true".equalsIgnoreCase(value);
     }
+
 }

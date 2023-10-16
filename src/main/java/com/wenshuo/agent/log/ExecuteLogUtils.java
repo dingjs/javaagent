@@ -2,6 +2,7 @@
  * @(#)ExecuteLogUtils.java 2015-7-27 下午05:57:01 javaagent Copyright 2015 wenshuo, Inc. All rights reserved. wenshuo
  * PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
+
 package com.wenshuo.agent.log;
 
 import java.io.BufferedWriter;
@@ -24,6 +25,8 @@ import java.util.concurrent.TimeUnit;
 import com.wenshuo.agent.AgentUtils;
 import com.wenshuo.agent.ConfigUtils;
 import com.wenshuo.agent.NamedThreadFactory;
+import com.wenshuo.agent.applog.AppLogFactory;
+import com.wenshuo.agent.applog.IAppLog;
 
 /**
  * ExecuteLogUtils
@@ -57,6 +60,8 @@ public class ExecuteLogUtils {
 
     private static volatile boolean isInitialized = false;
 
+    private static final IAppLog log = AppLogFactory.getAppLog(ExecuteLogUtils.class);
+
     private ExecuteLogUtils() {
         super();
     }
@@ -76,7 +81,7 @@ public class ExecuteLogUtils {
         logAvgExecuteTime = ConfigUtils.isLogAvgExecuteTime();
         isUsingNanoTime = ConfigUtils.isUsingNanoTime();
         if (AgentUtils.isBlank(logFileName)) {
-            System.err.println("日志文件名为空");
+            log.error("日志文件名为空");
             throw new RuntimeException("日志文件名为空");
         }
         setNextDateStartTimeMillis();
@@ -136,7 +141,7 @@ public class ExecuteLogUtils {
         ConcurrentHashMap<String, long[]> methodCounterMap = getOrCreateClassExecutesMapping(className);
         long[] counter = methodCounterMap.get(methodName);
         if (null == counter) {
-            methodCounterMap.put(methodName, new long[]{1, executeTime});
+            methodCounterMap.put(methodName, new long[] {1, executeTime});
         } else {
             counter[0]++;
             counter[1] = executeTime + counter[1];
@@ -179,7 +184,7 @@ public class ExecuteLogUtils {
                 counterLogWriter.newLine();
             }
         } catch (IOException e) {
-            System.err.println(e);
+            log.error(e.getMessage(), e);
         }
 
     }
@@ -188,7 +193,7 @@ public class ExecuteLogUtils {
         try {
             counterLogWriter.flush();
         } catch (IOException e) {
-            System.err.println(e);
+            log.error(e.getMessage(), e);
         } finally {
             AgentUtils.closeQuietly(counterLogWriter);
             counterLogWriter = null;
@@ -224,7 +229,7 @@ public class ExecuteLogUtils {
             counterLogWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(logFile, true), ENCODING),
                     BUFFER_SIZE);
         } catch (IOException e) {
-            System.err.println(e);
+            log.error(e.getMessage(), e);
             throw new RuntimeException("无法初始化【" + logFileName + "】,建议您检查磁盘空间，或者手动删除该日志文件");
         }
     }
@@ -254,7 +259,7 @@ public class ExecuteLogUtils {
             AgentUtils.forceMkdir(dirFile);
             boolean created = logFile.createNewFile();
             if (!created) {
-                System.err.println("【" + logFileName + "】创建失败");
+                log.error("【" + logFileName + "】创建失败");
                 throw new RuntimeException("【" + logFileName + "】创建失败");
             }
         }
@@ -276,7 +281,7 @@ public class ExecuteLogUtils {
         try {
             startTime = sdf.parse(dateStr + " 00:00:00");
         } catch (ParseException e) {
-            System.err.println(e);
+            log.error(e.getMessage(), e);
         }
         return startTime;
     }
@@ -313,4 +318,5 @@ public class ExecuteLogUtils {
         f.close();
         return length;
     }
+
 }
