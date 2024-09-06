@@ -15,9 +15,9 @@ target/maven-archiver/pom.properties
 *.prefs
 *.project
 .classpath
-/target
+target
 /.settings
-/.idea
+.idea
 *.log
 dependency-reduced-pom.xml
 

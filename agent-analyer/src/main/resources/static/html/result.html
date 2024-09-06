@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" href="../js/layui/css/layui.css" media="all">
+<title>Insert title here</title>
+</head>
+<body>
+<div id="resultTableDiv" >
+  	<div id="resultTable" lay-filter="resultTableFil"></div>
+  	<div id="resultTablePageInfo" ></div>
+  	</div>
+  	<script src="../js/layui/layui.js"></script>
+	<script src="../js/layui/upload.js"></script>
+	<script src="../js/jquery-1.7.2.min.js"></script>
+	<script src="../js/echarts.common.min.js"></script>
+
+<script type="text/javascript">
+	 var _path="";
+	 </script>	
+<script>
+	function getUrlParam(name) {
+		var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+		var r = window.location.search.substr(1).match(reg);
+		if (r != null) {
+			return decodeURIComponent(r[2]);
+		}
+		return null;
+	}
+var className = getUrlParam('className');
+var methodName = getUrlParam('methodName');
+
+window.onload=getTableResult(1);
+var field ,type;
+function getTableResult(page,field ,type){
+	field = field;
+	type = type;
+	$.ajax({
+        url: _path +'/logFileAnalysis/getDetailTableResult',
+        data:{"page":page,"type":field,"order":type,"className":className,"methodName":methodName||''},
+        async:true,
+        dataType: "json",
+        success: function(data){
+        	 layui.use('table', function(){
+        		  var table = layui.table;
+
+        		  table.render({
+        		    elem: '#resultTable'
+        		    ,data:data.data
+        		    ,cellMinWidth: 80 //全局定义常规单元格的最小宽度，layui 2.2.1 新增
+        		    ,pageSize:15
+        		    ,limit:100
+        		    ,cols: [[
+        		 		      {field:'class', width:300, title: '类名'}
+        		 		      ,{field:'time', title: '总时间', width: 120, sort: true}
+        		 		      ,{field:'counter', width:120, title: '总次数', sort: true}
+        		 		      ,{field:'avg',width:100, title: '平均数', sort: true}//minWidth：局部定义当前单元格的最小宽度，layui 2.2.1 新增
+							  , {field: 'min', width: 100, title: '最小值', sort: true}
+							  , {field: 'max', width: 100, title: '最大值', sort: true}
+							  , {field: 'median', width: 100, title: '中位数', sort: true}
+							  , {field: 'th90Pct', width: 100, title: '90th pct', sort: true}
+							  , {field: 'th95Pct', width: 100, title: '95th pct', sort: true}
+							  , {field: 'th99Pct', width: 100, title: '99th pct', sort: true}
+        		 		      ,{field:'startAndEnd',width:200, title: '时间段', sort: true}
+        		 		    ]]
+        		  });
+        		  
+        		  table.on('sort(resultTableFil)', function(obj){ //注：tool是工具条事件名，test是table原始容器的属性 lay-filter="对应的值"
+        				field=obj.field;
+        				type= obj.type
+        				getTableResult(1,obj.field,obj.type);
+        				
+        			}) 
+        			
+        			
+        		});
+        	 var newfield,newtype;
+        		layui.use('laypage', function(){
+        		  	var laypage = layui.laypage;
+        		  		//执行一个laypage实例
+        		  		laypage.render({
+        		  		    elem: 'resultTablePageInfo' //注意，这里的 test1 是 ID，不用加 # 号
+        		  		    ,count: data.count //数据总数，从服务端得到
+        		  		    ,curr:data.pages
+        		  		  ,limit:100
+        		  		  	,layout: ['count', 'prev', 'page', 'next']
+        		  		    ,jump:function(data, first){
+        		  		    	if(!first){ //点击右下角分页时调用
+        		  		    		getTableResult(data.curr,field,type);
+        		                  }
+        		              }
+        		  		  });
+        		  		})
+        	
+            }
+    });
+}
+</script>
+</body>
+</html>
