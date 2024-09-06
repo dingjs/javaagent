@@ -69,7 +69,7 @@ public class AgentUtils {
      * whitespace
      * @since 2.0
      */
-    static boolean isNotBlank(String str) {
+    public static boolean isNotBlank(String str) {
         return !isBlank(str);
     }
 

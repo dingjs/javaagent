@@ -34,6 +34,12 @@ public interface ConfigConsts {
     
     String LOG_TIME_NANO = "agent.log.nano";
 
+    /** 是否统计方法执行时间百分比，同JMeter性能测试百分比计算方式，如果开启默认会统计最大值、最小值*/
+    String LOG_STAT_EXECUTE_TIME = "agent.log.stat.execute.time";
+
+    /** 方法执行时间统计百分比（agent.log.stat.execute.time=true时有效），多选范围[0, 1]，例如：0.5,0.9,0.95,0.99 */
+    String LOG_STAT_EXECUTE_TIME_PCT = "agent.log.stat.execute.time.pct";
+
     int DEFAULT_LOG_INTERVAL = 600;
 
 }

@@ -164,4 +164,28 @@ public class ConfigUtils {
         return "true".equalsIgnoreCase(value);
     }
 
+    /**
+     * ConfigUtils
+     *
+     * @author fanzhongwei
+     * @return boolean 是否统计方法执行时间百分比，同JMeter性能测试百分比计算方式
+     * @date 2024/9/5 下午7:12
+     **/
+    public static boolean isLogStatExecuteTime() {
+        String value = getProperty(ConfigConsts.LOG_STAT_EXECUTE_TIME);
+        return "true".equalsIgnoreCase(value);
+    }
+
+    /**
+     * ConfigUtils
+     *
+     * @author fanzhongwei
+     * @return boolean 方法执行时间统计百分比（agent.log.stat.execute.time=true时有效），多选范围[0, 1]，例如：0.5,0.9,0.95,0.99
+     * @date 2024/9/5 下午7:13
+     **/
+    public static String getLogStatExecuteTimePct() {
+        String value = getProperty(ConfigConsts.LOG_STAT_EXECUTE_TIME_PCT);
+        return value;
+    }
+
 }

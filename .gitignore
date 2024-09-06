@@ -19,4 +19,5 @@ target/maven-archiver/pom.properties
 /.settings
 /.idea
 *.log
+dependency-reduced-pom.xml
 

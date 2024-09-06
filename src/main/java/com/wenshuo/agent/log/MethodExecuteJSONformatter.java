@@ -1,5 +1,7 @@
 package com.wenshuo.agent.log;
 
+import com.tdunning.math.stats.MergingDigest;
+
 import java.util.Map;
 
 
@@ -17,7 +19,7 @@ class MethodExecuteJSONformatter {
      * MethodExecuteJSONformatter
      *
      * @param className         类名
-     * @param method2ExecuteMap Map<方法名, Long[]> 数组第一个是执行次数，第二个是执行时间
+     * @param method2ExecuteMap Map<方法名, Object[]> 数组第一个是执行次数，第二个是执行时间，第三个是方法执行时间统计（MergingDigest, 根据配置可选）
      * @param startTime         统计周期的开始时间，格式为 yyyy-MM-dd HH:mm:ss
      * @param endTime           统计周期的结束时间，格式为 yyyy-MM-dd HH:mm:ss
      * @return 格式化后的json string
@@ -26,19 +28,21 @@ class MethodExecuteJSONformatter {
      * @date 2018年8月22日 下午8:49:18
      * @version 2.0.0
      */
-    static String getMethodExecuteJSON(String className, Map<String, long[]> method2ExecuteMap,
-                                       String startTime, String endTime, boolean isUsingNanoTime, boolean logAvgExecuteTime) {
+    static String getMethodExecuteJSON(String className, Map<String, Object[]> method2ExecuteMap,
+                                       String startTime, String endTime, boolean isUsingNanoTime, boolean logAvgExecuteTime,
+                                       boolean logStatExecuteTime, double[] logStatExecuteTimePct) {
         StringBuilder json = new StringBuilder("{");
         appendString(json, "class", className).append(",");
         appendString(json, "start", startTime).append(",");
         appendString(json, "end", endTime).append(",");
         appendKey(json, "methods").append("[");
-        for (Map.Entry<String, long[]> methodEntry : method2ExecuteMap.entrySet()) {
+        for (Map.Entry<String, Object[]> methodEntry : method2ExecuteMap.entrySet()) {
             String methodName = methodEntry.getKey();
-            long[] executeCounter = methodEntry.getValue();
-            long counter = executeCounter[0];
+            Object[] executeCounter = methodEntry.getValue();
+            Long counter = (Long) executeCounter[0];
+            Long totalTime = (Long) executeCounter[1];
             long timeInMillis
-                    = isUsingNanoTime ? executeCounter[1] / 1000000 : executeCounter[1];
+                    = isUsingNanoTime ? totalTime / 1000000 : totalTime;
             json.append("{");
             appendString(json, "name", methodName).append(",");
             appendLong(json, "counter", counter).append(",");
@@ -46,6 +50,20 @@ class MethodExecuteJSONformatter {
             if (logAvgExecuteTime && counter > 0) {
                 json.append(",");
                 appendLong(json, "avg", timeInMillis / counter);
+            }
+            if (logStatExecuteTime && counter > 0) {
+                MergingDigest md = (MergingDigest)executeCounter[2];
+                json.append(",");
+                appendLong(json, "min", (long) md.getMin());
+
+                for (int i = 0; i < logStatExecuteTimePct.length; i++) {
+                    double pct = logStatExecuteTimePct[i];
+                    json.append(",");
+                    appendLong(json, "th" + (int)(pct * 100), (long) md.quantile(pct));
+                }
+
+                json.append(",");
+                appendLong(json, "max", (long) md.getMax());
             }
             json.append("},");
         }
