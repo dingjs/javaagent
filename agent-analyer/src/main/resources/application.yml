@@ -1,0 +1,40 @@
+server:
+  port: 8080
+spring:
+  datasource:
+    url: jdbc:h2:mem:~/h2test;DB_CLOSE_DELAY=-1
+    platform: h2
+    username: sa
+    password:
+    driverClassName: org.h2.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show_sql: false
+        use_sql_comments: false
+        format_sql: false
+        generate_statistics : false
+        cache : 
+          use_second_level_cache : false
+        jdbc:
+           batch_size : 50
+           order_inserts : true
+           order_updates : true
+  h2:
+    console:
+      enabled: true
+      path: /console
+      settings:
+        trace: false
+        web-allow-others: true
+  servlet:
+    multipart:
+      max-file-size: 1000MB
+      max-request-size: 1000MB
+logging:
+  level:
+    root: info
+    com.wenshuo: debug
