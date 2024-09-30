@@ -59,7 +59,7 @@ public class AgentLogClassFileTransformer implements ClassFileTransformer {
             }
             byteCode = aopLog(cc, className, byteCode);
         } catch (Exception ex) {
-            ex.printStackTrace();
+            System.err.println("javaagent修改字节码失败，失败原因：" + ex.getMessage());
             log.error(ex.getMessage(), ex);
         }
         return byteCode;
