@@ -165,6 +165,7 @@ public class ExecuteLogUtils {
                 int compression = 150;
                 int factor = 5;
                 md = new MergingDigest(compression, (factor + 1) * compression, compression);
+                md.add(executeTime);
             }
             methodCounterMap.put(methodName, new Object[] {1L, executeTime, md});
         } else {

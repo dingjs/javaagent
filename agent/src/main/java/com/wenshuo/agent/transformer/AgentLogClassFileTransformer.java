@@ -59,6 +59,7 @@ public class AgentLogClassFileTransformer implements ClassFileTransformer {
             }
             byteCode = aopLog(cc, className, byteCode);
         } catch (Exception ex) {
+            ex.printStackTrace();
             log.error(ex.getMessage(), ex);
         }
         return byteCode;
@@ -100,10 +101,10 @@ public class AgentLogClassFileTransformer implements ClassFileTransformer {
 
         // 避免变量名重复
         m.addLocalVariable("dingjsh_javaagent_elapsedTime", CtClass.longType);
+        m.insertAfter("dingjsh_javaagent_elapsedTime = " + timeMethodStr + " - dingjsh_javaagent_elapsedTime;"
+                + LOG_UTILS + ".log(" + aopClassName + ",\"" + m.getName()
+                + "\",(long)dingjsh_javaagent_elapsedTime" + ");", true);
         m.insertBefore("dingjsh_javaagent_elapsedTime = " + timeMethodStr + ";");
-        m.insertAfter("dingjsh_javaagent_elapsedTime = " + timeMethodStr + " - dingjsh_javaagent_elapsedTime;");
-        m.insertAfter(LOG_UTILS + ".log(" + aopClassName + ",\"" + m.getName()
-                + "\",(long)dingjsh_javaagent_elapsedTime" + ");");
     }
 
     /**
