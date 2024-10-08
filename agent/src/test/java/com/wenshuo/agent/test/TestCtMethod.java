@@ -10,15 +10,11 @@ import com.tdunning.math.stats.Centroid;
 import com.tdunning.math.stats.Dist;
 import com.tdunning.math.stats.MergingDigest;
 import com.tdunning.math.stats.ScaleFunction;
+import com.wenshuo.agent.ConfigUtils;
+import com.wenshuo.agent.javassist.*;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import com.wenshuo.agent.javassist.ClassPool;
-import com.wenshuo.agent.javassist.CtClass;
-import com.wenshuo.agent.javassist.CtMethod;
-import com.wenshuo.agent.javassist.Modifier;
-import com.wenshuo.agent.javassist.NotFoundException;
 
 public class TestCtMethod {
     
@@ -51,6 +47,47 @@ public class TestCtMethod {
     }
     static void defaultStatic(){
         System.out.println("I'm default and static");
+    }
+
+    public static Object publicStaticWithResult(){
+        String result = null;
+        System.out.println("I'm public and static");
+        Random random = new Random();
+        if(random.nextInt(100) < 50){
+            result = new String("hello world：random.nextInt(100) < 50");
+            return result;
+        }
+        result = new String("hello world：random.nextInt(100) >= 50");
+        return result;
+    }
+
+    @Test
+    @Ignore
+    public void asFinallyTest() throws Exception {
+        String className = "com.wenshuo.agent.test.TestCtMethod";
+        ClassPool pool = ClassPool.getDefault();
+        CtClass ctClass = pool.get(className);
+
+        transformerMethod(className, ctClass.getDeclaredMethod("publicStatic"));
+        transformerMethod(className, ctClass.getDeclaredMethod("publicStaticWithResult"));
+
+        ctClass.writeFile("/home/code/github/javaagent/agent/target");
+    }
+
+    private static void transformerMethod(String className, CtMethod m) throws CannotCompileException {
+        boolean isMethodStatic = Modifier.isStatic(m.getModifiers());
+        String aopClassName = isMethodStatic ? "\"" + className + "\"" : "this.getClass().getName()";
+        final String timeMethodStr
+                = ConfigUtils.isUsingNanoTime() ? "java.lang.System.nanoTime()" : "java.lang.System.currentTimeMillis"
+                + "()";
+        String LOG_UTILS = "com.wenshuo.agent.log.ExecuteLogUtils";
+
+        // 避免变量名重复
+        m.addLocalVariable("dingjsh_javaagent_elapsedTime", CtClass.longType);
+        m.insertAfter("dingjsh_javaagent_elapsedTime = " + timeMethodStr + " - dingjsh_javaagent_elapsedTime;"
+                + LOG_UTILS + ".log(" + aopClassName + ",\"" + m.getName()
+                + "\",(long)dingjsh_javaagent_elapsedTime" + ");", true);
+        m.insertBefore("dingjsh_javaagent_elapsedTime = " + timeMethodStr + ";");
     }
 
 
